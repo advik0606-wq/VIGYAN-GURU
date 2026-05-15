@@ -1,7 +1,3 @@
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
 export const getSocraticTutorResponse = async (
   messages: { role: 'user' | 'model'; parts: { text: string }[] }[],
   image?: { mimeType: string; data: string },
@@ -25,24 +21,31 @@ export const getSocraticTutorResponse = async (
   4. Use LaTeX for any mathematical equations.
   5. If they are building a project, help them conceptualize the structure, materials, and working mechanism through dialogue.`;
 
-  const contents = [...messages];
+  const contents = JSON.parse(JSON.stringify(messages));
 
-  // If there's an image, we should probably prepend it to the first message or the current one
-  // In this app structure, the image usually starts the session.
   if (image && contents.length > 0) {
     if (contents[0].role === 'user') {
-      contents[0].parts.push({ inlineData: image } as any);
+      contents[0].parts.push({ inlineData: image });
     }
   }
 
-  const response: GenerateContentResponse = await ai.models.generateContent({
-    model,
-    contents,
-    config: {
+  const response = await fetch("/api/gemini", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      contents,
       systemInstruction,
+      model,
       temperature: 0.7,
-    }
+    }),
   });
 
-  return response;
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to get response from Vigyan Guru.");
+  }
+
+  return await response.json();
 };
