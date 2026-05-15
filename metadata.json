@@ -1,0 +1,13 @@
+{
+  "name": "Vigyan Guru",
+  "description": "Vigyan Guru is an Engineering Architect designed to help students build, visualize, and simulate working models for school science projects.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "Project Engineering",
+    "3D Visualization Scripting",
+    "Stress Test Simulation",
+    "Assembly Guides"
+  ]
+}
