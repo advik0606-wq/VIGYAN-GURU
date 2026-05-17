@@ -17,22 +17,51 @@ import {
   BrainCircuit,
   MessageCircleQuestion,
   History,
-  MessageSquare
+  MessageSquare,
+  Star,
+  GraduationCap,
+  LayoutGrid
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import confetti from 'canvas-confetti';
+import { Logo } from './components/Logo';
 import { getSocraticTutorResponse } from './lib/gemini';
 import { Message, ProblemStep } from './types';
+import { 
+  auth, 
+  db, 
+  googleProvider, 
+  signInWithPopup, 
+  signOut, 
+  onAuthStateChanged,
+  doc,
+  setDoc,
+  getDoc,
+  collection,
+  addDoc,
+  serverTimestamp,
+  OperationType,
+  handleFirestoreError,
+  query,
+  orderBy,
+  limit,
+  onSnapshot,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile
+} from './lib/firebase';
 
-export type Page = 'home' | 'tutor' | 'streaks' | 'library' | 'auth' | 'contact';
+export type Page = 'home' | 'tutor' | 'streaks' | 'library' | 'auth' | 'contact' | 'reviews';
 export type AuthMode = 'login' | 'signup';
 
 export default function App() {
   const [activePage, setActivePage] = useState<Page>('home');
-  const [user, setUser] = useState<{ username: string } | null>(null);
+  const [user, setUser] = useState<{ uid: string; email: string | null; displayName: string | null; username: string } | null>(null);
   const [authMode, setAuthMode] = useState<AuthMode>('login');
-  const [authForm, setAuthForm] = useState({ username: '', password: '' });
+  const [authForm, setAuthForm] = useState({ username: '', email: '', password: '' });
   const [authError, setAuthError] = useState('');
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [rememberedEmail, setRememberedEmail] = useState('');
   const [problemImage, setProblemImage] = useState<string | null>(null);
   const [problemMimeType, setProblemMimeType] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -42,14 +71,45 @@ export default function App() {
   const [selectedLanguage, setSelectedLanguage] = useState('Hinglish');
   const [isSubmittingContact, setIsSubmittingContact] = useState(false);
   const [contactSubmitted, setContactSubmitted] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('vigyan_guru_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    const savedEmail = localStorage.getItem('last_user_id');
+    if (savedEmail) {
+      setRememberedEmail(savedEmail);
+      setAuthForm(prev => ({ ...prev, email: savedEmail }));
     }
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        let username = firebaseUser.displayName || 'Learner';
+        
+        // Try to get extended profile from Firestore
+        try {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          if (userDoc.exists()) {
+            username = userDoc.data().username || username;
+          }
+        } catch (e) {
+          console.error("Profile fetch error:", e);
+        }
+
+        setUser({ 
+          uid: firebaseUser.uid, 
+          email: firebaseUser.email, 
+          displayName: firebaseUser.displayName,
+          username
+        });
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -58,51 +118,84 @@ export default function App() {
     }
   }, [messages]);
 
+  const handleGoogleSignIn = async () => {
+    setAuthError('');
+    setIsAuthLoading(true);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      // Check if user doc exists, if not create one
+      const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+      if (!userDoc.exists()) {
+        await setDoc(doc(db, 'users', result.user.uid), {
+          uid: result.user.uid,
+          email: result.user.email,
+          username: result.user.displayName || 'Learner',
+          createdAt: serverTimestamp()
+        });
+      }
+      setActivePage('home');
+    } catch (error: any) {
+      setAuthError(error.message || 'Google sign-in failed.');
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
   const toggleAuthMode = () => {
     setAuthMode(prev => prev === 'login' ? 'signup' : 'login');
     setAuthError('');
   };
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
+    setIsAuthLoading(true);
 
-    if (authForm.username.length < 3 || authForm.password.length < 6) {
-      setAuthError('Username (min 3) or Password (min 6) too short.');
-      return;
-    }
+    try {
+      if (authMode === 'signup') {
+        if (authForm.username.length < 3) {
+           setAuthError('Username must be at least 3 characters.');
+           setIsAuthLoading(false);
+           return;
+        }
+        
+        const credentials = await createUserWithEmailAndPassword(auth, authForm.email, authForm.password);
+        await updateProfile(credentials.user, { displayName: authForm.username });
+        
+        // Save to Firestore for cross-device username retrieval
+        await setDoc(doc(db, 'users', credentials.user.uid), {
+          uid: credentials.user.uid,
+          email: authForm.email,
+          username: authForm.username,
+          createdAt: serverTimestamp()
+        });
 
-    if (authMode === 'signup') {
-      const existing = localStorage.getItem(`user_${authForm.username}`);
-      if (existing) {
-        setAuthError('Username already exists. Try logging in.');
-        return;
+        localStorage.setItem('last_user_id', authForm.email);
+        setActivePage('home');
+      } else {
+        await signInWithEmailAndPassword(auth, authForm.email, authForm.password);
+        localStorage.setItem('last_user_id', authForm.email);
+        setActivePage('home');
       }
-      const newUser = { username: authForm.username, password: authForm.password };
-      localStorage.setItem(`user_${authForm.username}`, JSON.stringify(newUser));
-      setUser({ username: authForm.username });
-      localStorage.setItem('vigyan_guru_user', JSON.stringify({ username: authForm.username }));
-      setActivePage('home');
-    } else {
-      const stored = localStorage.getItem(`user_${authForm.username}`);
-      if (!stored) {
-        setAuthError('User not found. Use "Create one now" below to register.');
-        return;
+    } catch (error: any) {
+      if (error.code === 'auth/operation-not-allowed') {
+        setAuthError('Email/Password provider is not enabled in Firebase Console.');
+      } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        setAuthError('Invalid credentials. Please check your email and password.');
+      } else if (error.code === 'auth/email-already-in-use') {
+        setAuthError('This email is already in use.');
+      } else if (error.code === 'auth/weak-password') {
+        setAuthError('Password is too weak. (Min 6 characters)');
+      } else {
+        setAuthError(error.message || 'Authentication failed.');
       }
-      const parsed = JSON.parse(stored);
-      if (parsed.password !== authForm.password) {
-        setAuthError('Invalid credentials.');
-        return;
-      }
-      setUser({ username: authForm.username });
-      localStorage.setItem('vigyan_guru_user', JSON.stringify({ username: authForm.username }));
-      setActivePage('home');
+    } finally {
+      setIsAuthLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('vigyan_guru_user');
-    setUser(null);
+  const handleLogout = async () => {
+    await signOut(auth);
     setActivePage('auth');
   };
 
@@ -115,25 +208,36 @@ export default function App() {
       >
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-sky-400"></div>
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-violet-600/20">
-            <BookOpen className="w-8 h-8 text-white" />
-          </div>
+          <Logo size="lg" className="mx-auto mb-6" />
           <h2 className="text-3xl font-serif italic mb-2">
-            {authMode === 'login' ? 'Identity Login' : 'Create Identity'}
+            {authMode === 'login' ? 'Scholar Login' : 'Initial Registration'}
           </h2>
           <p className="text-[10px] text-white/30 uppercase tracking-[0.3em] font-black">
-            {authMode === 'login' ? 'Engage the Vigyan Guru Meta-Engine' : 'Initialize your learning profile'}
+            {authMode === 'login' ? 'Resuming Scientific Inquiry' : 'Establishing User Protocol'}
           </p>
         </div>
 
         <form onSubmit={handleAuth} className="space-y-6">
+          {authMode === 'signup' && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+              <label className="block text-[10px] font-black text-white/30 uppercase tracking-widest mb-2 ml-4">Subject Name</label>
+              <input 
+                required
+                value={authForm.username}
+                onChange={e => setAuthForm(prev => ({ ...prev, username: e.target.value }))}
+                placeholder="e.g. VigyanSeeker"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-violet-500/50 transition-all text-white placeholder:text-white/10"
+              />
+            </motion.div>
+          )}
           <div>
-            <label className="block text-[10px] font-black text-white/30 uppercase tracking-widest mb-2 ml-4">Username</label>
+            <label className="block text-[10px] font-black text-white/30 uppercase tracking-widest mb-2 ml-4">Identifier (Email)</label>
             <input 
               required
-              value={authForm.username}
-              onChange={e => setAuthForm(prev => ({ ...prev, username: e.target.value }))}
-              placeholder="e.g. HeuristicPioneer"
+              type="email"
+              value={authForm.email}
+              onChange={e => setAuthForm(prev => ({ ...prev, email: e.target.value }))}
+              placeholder="scholar@vidyapeeth.edu"
               className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-violet-500/50 transition-all text-white placeholder:text-white/10"
             />
           </div>
@@ -144,28 +248,49 @@ export default function App() {
               type="password"
               value={authForm.password}
               onChange={e => setAuthForm(prev => ({ ...prev, password: e.target.value }))}
-              placeholder="••••••••"
+              placeholder="Required: 6+ characters"
               className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-violet-500/50 transition-all text-white placeholder:text-white/10"
             />
           </div>
           
           {authError && (
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-xs font-bold text-center px-4">
-              {authError}
-            </motion.p>
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl">
+              <p className="text-red-400 text-[10px] font-bold text-center leading-relaxed">
+                {authError}
+              </p>
+            </motion.div>
           )}
 
-          <button type="submit" className="w-full py-4 bg-violet-600 text-white rounded-2xl font-bold text-sm tracking-tight hover:bg-violet-500 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-violet-600/20 uppercase tracking-widest">
-            {authMode === 'login' ? 'Engage Session' : 'Create Identity'}
+          <button 
+            type="submit" 
+            disabled={isAuthLoading}
+            className="w-full py-4 bg-violet-600 text-white rounded-2xl font-bold text-sm tracking-tight hover:bg-violet-500 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-violet-600/20 uppercase tracking-widest disabled:opacity-50"
+          >
+            {isAuthLoading ? 'Connecting...' : (authMode === 'login' ? 'Resume Session' : 'Begin Journey')}
           </button>
         </form>
+
+        <div className="mt-6 flex items-center gap-4">
+          <div className="h-[1px] flex-1 bg-white/10"></div>
+          <span className="text-[10px] text-white/20 uppercase tracking-widest font-black">or utilize oauth</span>
+          <div className="h-[1px] flex-1 bg-white/10"></div>
+        </div>
+
+        <button 
+          onClick={handleGoogleSignIn}
+          disabled={isAuthLoading}
+          className="w-full mt-6 py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-bold text-sm tracking-tighter hover:bg-white/10 transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50"
+        >
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
+          {isAuthLoading ? 'SYSCALL ACTIVE...' : 'ENGAGE WITH GOOGLE'}
+        </button>
 
         <div className="mt-8 text-center">
           <button 
             onClick={toggleAuthMode}
             className="text-[10px] font-black text-white/30 uppercase tracking-widest hover:text-white transition-colors py-2 px-4 border border-white/5 rounded-full hover:bg-white/5 active:scale-95"
           >
-            {authMode === 'login' ? 'No account? Create one now' : 'Already have an account? Login here'}
+            {authMode === 'login' ? 'New Scholar? Create Account' : 'Existing Peer? Scholar Login'}
           </button>
         </div>
       </motion.div>
@@ -247,10 +372,11 @@ export default function App() {
   const renderNavigation = () => (
     <nav className="fixed bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-2xl border border-white/10 rounded-full md:rounded-[2.5rem] px-2 py-2 md:px-4 md:py-3 flex items-center gap-2 md:gap-6 z-50 shadow-2xl ring-1 ring-white/5">
       {[
-        { id: 'home', icon: BookOpen, label: 'Hub' },
+        { id: 'home', icon: LayoutGrid, label: 'Hub' },
         { id: 'tutor', icon: Sparkles, label: 'Tutor' },
         { id: 'streaks', icon: BrainCircuit, label: 'Collective' },
         { id: 'library', icon: History, label: 'Vault' },
+        { id: 'reviews', icon: Star, label: 'Reviews' },
         { id: 'contact', icon: MessageSquare, label: 'Contact' },
       ].map((item) => (
         <button
@@ -271,7 +397,7 @@ export default function App() {
 
   const renderHome = () => (
     <div className="flex-1 overflow-y-auto px-8 py-12 flex flex-col gap-12 custom-scrollbar">
-      <div className="max-w-4xl mx-auto w-full text-center">
+      <div className="max-w-screen-xl mx-auto w-full text-center">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <h2 className="text-5xl md:text-6xl font-serif italic mb-6 tracking-tight">Wisdom Begins in Wonder.</h2>
           <p className="text-white/40 text-sm uppercase tracking-[0.4em] font-medium mb-12">Engineering Architect Core • Project Hub</p>
@@ -340,7 +466,7 @@ export default function App() {
   );
 
   const renderStreaks = () => (
-    <div className="flex-1 p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-7xl mx-auto w-full z-10 overflow-y-auto">
+    <div className="flex-1 p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-screen-2xl mx-auto w-full z-10 overflow-y-auto">
       <div className="lg:col-span-8 space-y-8">
         <header className="flex items-center justify-between">
           <div>
@@ -401,7 +527,7 @@ export default function App() {
   );
 
   const renderLibrary = () => (
-    <div className="flex-1 p-8 max-w-5xl mx-auto w-full z-10 space-y-12 overflow-y-auto">
+    <div className="flex-1 p-8 max-w-screen-2xl mx-auto w-full z-10 space-y-12 overflow-y-auto">
       <header>
         <h2 className="text-5xl font-serif italic mb-2 tracking-tight">Wisdom Repository</h2>
         <p className="text-[10px] text-white/40 uppercase tracking-[0.5em] font-black">History of Logic • Self-Owned Encryption</p>
@@ -429,7 +555,7 @@ export default function App() {
   );
 
   const renderTutor = () => (
-    <main className="flex-1 max-w-[1600px] mx-auto w-full px-4 md:px-8 py-4 md:py-8 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 overflow-hidden z-10 relative">
+    <main className="flex-1 max-w-screen-2xl mx-auto w-full px-4 md:px-8 py-4 md:py-8 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 overflow-hidden z-10 relative">
       <div className="lg:col-span-4 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar order-2 lg:order-1">
         <section className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10 ring-1 ring-white/5">
           <div className="space-y-4">
@@ -509,7 +635,7 @@ export default function App() {
         </section>
       </div>
 
-      <div className="lg:col-span-8 flex flex-col bg-white/5 backdrop-blur-xl rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden relative ring-1 ring-white/5 order-1 lg:order-2 h-[600px] lg:h-auto">
+      <div className="lg:col-span-8 flex flex-col bg-white/5 backdrop-blur-xl rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden relative ring-1 ring-white/5 order-1 lg:order-2 h-[600px] lg:h-full">
         <div className="px-8 py-5 border-b border-white/10 flex items-center justify-between bg-white/5 backdrop-blur-md sticky top-0 z-10">
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -645,33 +771,245 @@ export default function App() {
     setIsSubmittingContact(true);
     
     const formData = new FormData(e.currentTarget);
+    const contactData = {
+      uid: user?.uid || 'anonymous',
+      name: formData.get('name') as string,
+      email: formData.get('email') as string,
+      subject: formData.get('subject') as string,
+      message: formData.get('message') as string,
+      createdAt: serverTimestamp()
+    };
     
     try {
-      const response = await fetch("https://formspree.io/f/xbdwnjpb", {
+      // Save to Firestore
+      await addDoc(collection(db, 'messages'), contactData);
+
+      // Optional: still send to Formspree for email notification
+      await fetch("https://formspree.io/f/xbdwnjpb", {
         method: "POST",
         body: formData,
-        headers: {
-          'Accept': 'application/json'
-        }
+        headers: { 'Accept': 'application/json' }
       });
       
-      if (response.ok) {
-        setContactSubmitted(true);
-        confetti({
-          particleCount: 150,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#8b5cf6', '#c084fc', '#ffffff']
-        });
-      } else {
-        alert("Transmission failed. Please try again later.");
-      }
+      setContactSubmitted(true);
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#8b5cf6', '#c084fc', '#ffffff']
+      });
     } catch (error) {
-      alert("Network error. Please try again.");
+      handleFirestoreError(error, OperationType.WRITE, 'messages');
+      alert("Transmission failed. Please try again later.");
     } finally {
       setIsSubmittingContact(false);
     }
   };
+
+  const [recentReviews, setRecentReviews] = useState<any[]>([]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'), limit(10));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const reviewsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setRecentReviews(reviewsData);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleReviewSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (reviewRating === 0) {
+      alert("Please select a rating before transmitting.");
+      return;
+    }
+    setIsSubmittingReview(true);
+    
+    const formData = new FormData(e.currentTarget);
+    const author = formData.get('author') as string;
+    const reviewText = formData.get('review') as string;
+
+    const reviewData = {
+      uid: user?.uid || 'anonymous',
+      author: author || user?.username || 'Anonymous Scholar',
+      rating: reviewRating,
+      review: reviewText,
+      createdAt: serverTimestamp()
+    };
+    
+    try {
+      await addDoc(collection(db, 'reviews'), reviewData);
+
+      // Also send to Formspree for email notification
+      const formPayload = new FormData();
+      formPayload.append('author', author);
+      formPayload.append('rating', reviewRating.toString());
+      formPayload.append('review', reviewText);
+      await fetch("https://formspree.io/f/xbdwnjpb", {
+        method: "POST",
+        body: formPayload,
+        headers: { 'Accept': 'application/json' }
+      });
+
+      setReviewSubmitted(true);
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#fbbf24', '#f59e0b', '#ffffff']
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, 'reviews');
+      alert("Review transmission failed.");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  const renderReviews = () => (
+    <div className="flex-1 flex flex-col items-center justify-center p-8 relative overflow-hidden overflow-y-auto custom-scrollbar">
+      <div className="absolute inset-0 bg-gradient-to-br from-amber-600/5 via-transparent to-violet-600/5 pointer-events-none"></div>
+      
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-xl w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 md:p-12 shadow-2xl relative z-10 my-8"
+      >
+        {reviewSubmitted ? (
+          <div className="text-center py-12">
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', damping: 12 }}
+              className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-amber-500/30 shadow-[0_0_20px_rgba(251,191,36,0.2)]"
+            >
+              <Star className="w-10 h-10 text-amber-400 fill-amber-400" />
+            </motion.div>
+            <h2 className="text-3xl font-serif italic text-white mb-4">Feedback Captured.</h2>
+            <p className="text-white/60 leading-relaxed max-w-sm mx-auto mb-8">
+              Your insight has been transmitted to the Architects. Your review helps us refine the heuristic systems.
+            </p>
+            <button 
+              onClick={() => {
+                setReviewSubmitted(false);
+                setReviewRating(0);
+                setActivePage('home');
+              }}
+              className="px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white/10 transition-all"
+            >
+              Return to Hub
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="text-center mb-10">
+              <div className="w-16 h-16 bg-amber-600/20 rounded-3xl border border-amber-500/30 flex items-center justify-center mx-auto mb-6">
+                <Star className="w-8 h-8 text-amber-400" />
+              </div>
+              <h2 className="text-3xl font-serif italic text-white mb-2">Rate the Architecture</h2>
+              <p className="text-[10px] text-white/30 uppercase tracking-[0.3em] font-black">
+                Review Sensor Online
+              </p>
+            </div>
+
+            <form onSubmit={handleReviewSubmit} className="space-y-8">
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black text-white/30 uppercase tracking-widest text-center">Quality Assessment</label>
+                <div className="flex justify-center gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewRating(star)}
+                      className="group relative p-2 transition-all active:scale-95"
+                    >
+                      <Star 
+                        className={`w-8 h-8 transition-all ${
+                          star <= reviewRating 
+                            ? 'text-amber-400 fill-amber-400 scale-110 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]' 
+                            : 'text-white/10 group-hover:text-white/30'
+                        }`} 
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-black text-white/30 uppercase tracking-widest ml-4">Identifier (Name/Email)</label>
+                  <input 
+                    type="text"
+                    name="author"
+                    required
+                    className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/40 focus:bg-white/[0.08] transition-all text-white placeholder-white/20 outline-none"
+                    placeholder="Anonymous Scholar"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-black text-white/30 uppercase tracking-widest ml-4">Expert Testimony</label>
+                  <textarea 
+                    name="review"
+                    required
+                    rows={4}
+                    className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/40 focus:bg-white/[0.08] transition-all text-white placeholder-white/20 outline-none resize-none"
+                    placeholder="Share your thoughts on the Vigyan Guru experience..."
+                  ></textarea>
+                </div>
+              </div>
+
+              <button 
+                type="submit"
+                disabled={isSubmittingReview}
+                className="w-full py-5 bg-amber-600 text-white rounded-2xl font-bold uppercase tracking-[0.2em] text-xs shadow-xl shadow-amber-600/20 hover:bg-amber-500 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isSubmittingReview ? (
+                  <>
+                    <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    Transmitting...
+                  </>
+                ) : (
+                  'Submit Review'
+                )}
+              </button>
+            </form>
+
+            <div className="mt-12 pt-12 border-t border-white/10">
+              <h3 className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-6 text-center">Community Testimonials</h3>
+              <div className="space-y-4">
+                {recentReviews.length > 0 ? (
+                  recentReviews.map((rev) => (
+                    <motion.div 
+                      key={rev.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-xs font-bold text-violet-300">{rev.author}</span>
+                        <div className="flex gap-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <Star 
+                              key={i} 
+                              className={`w-2.5 h-2.5 ${i < rev.rating ? 'text-amber-400 fill-amber-400' : 'text-white/10'}`} 
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-white/50 leading-relaxed italic">"{rev.review}"</p>
+                    </motion.div>
+                  ))
+                ) : (
+                  <p className="text-[10px] text-white/20 text-center italic">No expert testimonies yet. Be the first.</p>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </motion.div>
+    </div>
+  );
 
   const renderContact = () => (
     <div className="flex-1 flex flex-col items-center justify-center p-8 relative overflow-hidden overflow-y-auto custom-scrollbar">
@@ -794,7 +1132,7 @@ export default function App() {
     </div>
   );
   return (
-    <div className="h-screen bg-[#020205] text-white font-sans selection:bg-violet-500/30 selection:text-white relative overflow-hidden flex flex-col">
+    <div className="h-[100dvh] bg-[#020205] text-white font-sans selection:bg-violet-500/30 selection:text-white relative overflow-hidden flex flex-col">
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-violet-900/20 blur-[120px]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-amber-900/10 blur-[120px]"></div>
@@ -803,9 +1141,7 @@ export default function App() {
 
       <header className="h-20 flex items-center justify-between px-8 border-b border-white/10 backdrop-blur-md bg-white/5 z-50">
         <div className="flex items-center gap-4 cursor-pointer" onClick={() => setActivePage('home')}>
-          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-fuchsia-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/20">
-            <BookOpen className="w-6 h-6 text-white" />
-          </div>
+          <Logo size="sm" />
           <div>
             <h1 className="text-lg font-bold tracking-tight uppercase">Vigyan Guru</h1>
             <p className="text-[10px] text-white/40 uppercase tracking-[0.2em]">Science Guru • Project Guide</p>
@@ -815,11 +1151,14 @@ export default function App() {
             {user ? (
               <div className="flex gap-4 items-center">
                 <div className="bg-white/5 border border-white/10 rounded-full px-4 py-2 flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-lg bg-violet-600/20 border border-violet-500/30 flex items-center justify-center">
+                    <Star className="w-3.5 h-3.5 text-violet-400 fill-violet-400" />
+                  </div>
                   <span className="text-violet-300 text-sm font-bold flex items-center gap-1.5 uppercase tracking-tighter">
-                    <BrainCircuit className="w-4 h-4" /> {user.username}
+                    {user.username}
                   </span>
                   <div className="h-4 w-[1px] bg-white/10"></div>
-                  <span className="text-sky-400 text-sm font-bold">1,240 XP</span>
+                  <span className="text-sky-400 text-sm font-bold">Heuristic Level 1</span>
                 </div>
                 <button 
                   onClick={handleLogout}
@@ -845,6 +1184,7 @@ export default function App() {
         {activePage === 'tutor' && (user ? renderTutor() : renderAuth())}
         {activePage === 'streaks' && (user ? renderStreaks() : renderAuth())}
         {activePage === 'library' && (user ? renderLibrary() : renderAuth())}
+        {activePage === 'reviews' && renderReviews()}
         {activePage === 'contact' && renderContact()}
       </div>
 

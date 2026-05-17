@@ -1,10 +1,11 @@
 {
   "name": "Vigyan Guru",
-  "description": "Vigyan Guru is an Engineering Architect designed to help students build, visualize, and simulate working models for school science projects.",
+  "description": "An intelligent AI companion for science and engineering projects, providing assembly guides, simulations, and expert tutoring.",
   "requestFramePermissions": [
     "camera"
   ],
   "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API",
     "Project Engineering",
     "3D Visualization Scripting",
     "Stress Test Simulation",

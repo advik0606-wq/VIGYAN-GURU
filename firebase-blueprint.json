@@ -1,0 +1,57 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique identifier for the user" },
+        "email": { "type": "string", "format": "email", "description": "User's email address" },
+        "displayName": { "type": "string", "description": "User's full name" },
+        "photoURL": { "type": "string", "description": "URL to the user's profile photo" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "User submitted review and rating",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "UID of the user who submitted the review" },
+        "author": { "type": "string", "description": "Display name of the author" },
+        "rating": { "type": "number", "description": "Rating from 1 to 5" },
+        "review": { "type": "string", "description": "The textual review" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the review was created" }
+      },
+      "required": ["uid", "rating", "review", "createdAt"]
+    },
+    "Message": {
+      "title": "Contact Message",
+      "description": "Message sent via the contact form",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "UID of the user who sent the message (if signed in)" },
+        "name": { "type": "string", "description": "Sender's name" },
+        "email": { "type": "string", "format": "email", "description": "Sender's email" },
+        "subject": { "type": "string", "description": "Message subject" },
+        "message": { "type": "string", "description": "The message body" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the message was sent" }
+      },
+      "required": ["name", "email", "message", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Collection of user profiles"
+    },
+    "/reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Collection of user reviews"
+    },
+    "/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Collection of contact inquiries"
+    }
+  }
+}

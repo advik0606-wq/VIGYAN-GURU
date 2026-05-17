@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Saftey Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Validation Blueprints ---
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email']) &&
+             data.keys().size() <= 4 &&
+             data.uid is string && data.uid.size() <= 128 &&
+             data.email is string && data.email.size() <= 256;
+    }
+
+    function isValidReview(data) {
+      return data.keys().hasAll(['uid', 'rating', 'review', 'createdAt']) &&
+             data.keys().size() <= 6 &&
+             data.uid is string && data.uid == request.auth.uid &&
+             data.rating is number && data.rating >= 1 && data.rating <= 5 &&
+             data.review is string && data.review.size() <= 1000 &&
+             data.author is string && data.author.size() <= 128;
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll(['name', 'email', 'message', 'createdAt']) &&
+             data.keys().size() <= 7 &&
+             data.name is string && data.name.size() <= 128 &&
+             data.email is string && data.email.size() <= 256 &&
+             data.message is string && data.message.size() <= 2000;
+    }
+
+    // --- Collection Rules ---
+
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidUser(incoming()) && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'email']);
+    }
+
+    match /reviews/{reviewId} {
+      allow list: if true; // Publicly readable reviews
+      allow get: if true;
+      allow create: if isSignedIn() && isValidReview(incoming());
+      // No updates for reviews for now to keep it simple, or only owner
+      allow update: if isSignedIn() && isOwner(existing().uid) && isValidReview(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['rating', 'review', 'author']);
+    }
+
+    match /messages/{messageId} {
+      // Only the sender (if signed in) or admins (none yet) can read their own messages?
+      // Actually, usually contact messages are write-only for users.
+      allow create: if isValidMessage(incoming());
+      allow get: if isSignedIn() && (isOwner(existing().uid) || !existing().keys().hasAll(['uid']));
+    }
+  }
+}

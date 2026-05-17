@@ -7,8 +7,11 @@
 }
 
 @layer base {
+  html, body, #root {
+    @apply h-full w-full overflow-hidden;
+  }
   body {
-    @apply antialiased bg-[#020205] text-white;
+    @apply antialiased bg-[#020205] text-white overflow-hidden;
   }
 }
 
