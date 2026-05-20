@@ -90,13 +90,6 @@ export default function App() {
   const [currentSteps, setCurrentSteps] = useState<ProblemStep[]>([]);
   const [selectedLanguage, setSelectedLanguage] = useState('Hinglish');
 
-  const currentBranding = {
-    name: 'Gyan Guru',
-    short: 'G. Guru',
-    desc: 'Universal Socratic Guru • Subject & Project Guide',
-    bgBadge: 'bg-violet-600/10 text-violet-400 border-violet-500/20'
-  };
-
   const [isSubmittingContact, setIsSubmittingContact] = useState(false);
   const [contactSubmitted, setContactSubmitted] = useState(false);
   const [reviewRating, setReviewRating] = useState(0);
@@ -202,7 +195,7 @@ export default function App() {
       setAuthForm(prev => ({ ...prev, email: savedEmail }));
     }
 
-    // Check if there is an active local Gyan Guru session first
+    // Check if there is an active local Vigyan Guru session first
     const activeSessionStr = localStorage.getItem('vigyan_guru_session');
     if (activeSessionStr) {
       try {
@@ -337,7 +330,7 @@ export default function App() {
         if (Notification.permission === 'granted') {
           try {
             new Notification("🚨 Weekly Socratic Assessment Day is LIVE!", {
-              body: `Gyan Guru: Today is your weekly ${testPreference.format} assessment. Topic: ${testPreference.topic}. Check the portal now!`,
+              body: `Vigyan Guru: Today is your weekly ${testPreference.format} assessment. Topic: ${testPreference.topic}. Check the portal now!`,
               tag: 'vigyan-guru-test'
             });
           } catch (e) {
@@ -347,7 +340,7 @@ export default function App() {
           Notification.requestPermission().then(permission => {
             if (permission === 'granted') {
               new Notification("🚨 Weekly Socratic Assessment Day is LIVE!", {
-                body: `Gyan Guru: Assess your insights on ${testPreference.topic}!`,
+                body: `Vigyan Guru: Assess your science insights on ${testPreference.topic}!`,
                 tag: 'vigyan-guru-test'
               });
             }
@@ -374,7 +367,7 @@ export default function App() {
         }],
         sharedNotes: [
           {
-            sender: 'Gyan Guru Bot',
+            sender: 'Vigyan Guru Bot',
             text: `Welcome to "${newGroupTitle.trim()}" study circle! Share ideas, pool resources, and review quizzes together!`,
             createdAt: new Date().toISOString()
           }
@@ -669,7 +662,7 @@ export default function App() {
           return;
         }
 
-        // Create a custom robust Gyan Guru Scholar Profile
+        // Create a custom robust Vigyan Guru Scholar Profile
         const newLocalUser = {
           uid: 'scholar_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9),
           email: emailLower,
@@ -762,7 +755,7 @@ export default function App() {
       }
     } catch (error: any) {
       console.error("Scholar Auth Error:", error);
-      setAuthError('The Gyan Guru authentication protocol encountered an anomaly. Please try again.');
+      setAuthError('The Vigyan Guru authentication protocol encountered an anomaly. Please try again.');
     } finally {
       setIsAuthLoading(false);
     }
@@ -1118,7 +1111,7 @@ export default function App() {
             <div className="flex-1">
               <span className="inline-block px-4 py-1.5 rounded-full bg-violet-600/30 border border-violet-400/30 text-[10px] font-black uppercase tracking-widest mb-6">Heuristic Roadmap</span>
               <h3 className="text-3xl font-bold mb-4 tracking-tight leading-tight">Master Complex Projects without Shortcuts.</h3>
-              <p className="text-white/50 leading-relaxed mb-8">{currentBranding.name} uses deep reasoning to identify exactly where your logic breaks, guiding you back to clarity without ever giving the answer away.</p>
+              <p className="text-white/50 leading-relaxed mb-8">Vigyan Guru uses deep reasoning to identify exactly where your logic breaks, guiding you back to clarity without ever giving the answer away.</p>
               <button 
                 onClick={() => setActivePage('streaks')}
                 className="px-8 py-4 bg-white text-black rounded-2xl font-bold text-sm tracking-tight hover:scale-105 transition-transform"
@@ -1135,7 +1128,7 @@ export default function App() {
 
         {/* Footer with Contact Link */}
         <footer className={`mt-16 pt-8 border-t ${isLight ? 'border-gray-200 text-gray-800' : 'border-white/5 text-white/50'} flex flex-col sm:flex-row items-center justify-between gap-4 pb-12 opacity-80`}>
-          <p className="text-[10px] uppercase tracking-wider font-semibold">© {new Date().getFullYear()} {currentBranding.name} • Academic Socratic Platform.</p>
+          <p className="text-[10px] uppercase tracking-wider font-semibold">© {new Date().getFullYear()} Vigyan Guru • Academic Socratic Platform.</p>
           <div className="flex gap-6">
             <button 
               onClick={() => setActivePage('home')} 
@@ -1347,7 +1340,7 @@ export default function App() {
               <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-[#020205] rounded-full shadow-[0_0_8px_#22c55e]"></div>
             </div>
             <div>
-              <h2 className="font-bold text-white tracking-tight">{currentBranding.name}</h2>
+              <h2 className="font-bold text-white tracking-tight">Vigyan Guru</h2>
               <div className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_5px_#22c55e]"></span>
                 <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Heuristic Session Active</p>
@@ -1459,7 +1452,7 @@ export default function App() {
           <div className="mt-4 flex items-center justify-center gap-4">
              <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
              <p className="text-[9px] text-white/20 text-center uppercase tracking-[0.4em] font-black">
-               {currentBranding.name} • Master of Heuristics
+               Vigyan Guru • Master of Heuristics
              </p>
              <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
           </div>
@@ -1997,7 +1990,7 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
                     required
                     rows={4}
                     className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/40 focus:bg-white/[0.08] transition-all text-white placeholder-white/20 outline-none resize-none"
-                    placeholder={`Share your thoughts on the ${currentBranding.name} experience...`}
+                    placeholder="Share your thoughts on the Vigyan Guru experience..."
                   ></textarea>
                 </div>
               </div>
@@ -3644,11 +3637,11 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
         <div className="flex items-center gap-3 md:gap-4 cursor-pointer" onClick={() => setActivePage('home')}>
           <Logo size="sm" />
           <div className="hidden sm:block">
-            <h1 className="text-base md:text-lg font-bold tracking-tight uppercase text-violet-600 dark:text-violet-400">{currentBranding.name}</h1>
-            <p className={`text-[8px] md:text-[10px] uppercase tracking-[0.2em] ${isLight ? 'text-gray-500' : 'text-white/40'}`}>{currentBranding.desc}</p>
+            <h1 className="text-base md:text-lg font-bold tracking-tight uppercase text-violet-600 dark:text-violet-400">Vigyan Guru</h1>
+            <p className={`text-[8px] md:text-[10px] uppercase tracking-[0.2em] ${isLight ? 'text-gray-500' : 'text-white/40'}`}>Universal Socratic Guru • Subject & Project Guide</p>
           </div>
           <div className="block sm:hidden">
-            <h1 className="text-sm font-bold tracking-tight uppercase text-violet-600 dark:text-violet-400">{currentBranding.short}</h1>
+            <h1 className="text-sm font-bold tracking-tight uppercase text-violet-600 dark:text-violet-400">V. Guru</h1>
           </div>
         </div>
           <div className="flex gap-2 md:gap-3 items-center animate-fade-in">

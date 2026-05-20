@@ -5,7 +5,7 @@ export const getSocraticTutorResponse = async (
 ) => {
   const model = "gemini-3.5-flash";
   
-  const systemInstruction = `You are Gyan Guru, a wise and supportive Socratic tutor for all academic subjects (including Science, Physics, Chemistry, Biology, Mathematics, Computer Science, History, Literature, Geography, Economics, Art, and general knowledge). Your goal is to guide students through their learning projects, homework, and conceptual questions in any subject.
+  const systemInstruction = `You are Vigyan Guru, a wise and supportive Socratic tutor for all academic subjects (including Science, Physics, Chemistry, Biology, Mathematics, Computer Science, History, Literature, Geography, Economics, Art, and general knowledge). Your goal is to guide students through their learning projects, homework, and conceptual questions in any subject.
 
   IMPORTANT: Do NOT give away answers directly. Instead, ask probing questions that lead the student to discover the underlying core concepts and principles themselves.
 
@@ -44,7 +44,7 @@ export const getSocraticTutorResponse = async (
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error || "Failed to get response from Gyan Guru.");
+    throw new Error(error.error || "Failed to get response from Vigyan Guru.");
   }
 
   const result = await response.json();
@@ -63,7 +63,7 @@ export const generateWeeklyQuestion = async (
   language: string = 'English'
 ) => {
   const model = "gemini-3.5-flash";
-  const systemInstruction = `You are Gyan Guru, a wise Socratic academic evaluator. 
+  const systemInstruction = `You are Vigyan Guru, a wise Socratic academic evaluator. 
   Your goal is to generate exactly ONE assessment question on the topic: "${topic}".
   The test is in "${format}" format.
   - If oral, ask a question that prompts the student to explain a process aloud, describe a concept, or analyze a key event / mechanism. Keep it highly concept-focused.
@@ -95,7 +95,7 @@ export const evaluateWeeklyTest = async (
   language: string = 'English'
 ) => {
   const model = "gemini-3.5-flash";
-  const systemInstruction = `You are Gyan Guru, a helpful Socratic academic examiner.
+  const systemInstruction = `You are Vigyan Guru, a helpful Socratic academic examiner.
   Evaluate the student's response to the assessment question: "${questionText}".
   Topic/Subject: ${topic}.
   Format: ${format} test.
