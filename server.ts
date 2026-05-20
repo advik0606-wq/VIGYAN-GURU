@@ -24,7 +24,7 @@ app.post("/api/gemini", async (req, res) => {
 
     const ai = new GoogleGenAI({ apiKey });
     const model = ai.models.generateContent({
-      model: modelName || "gemini-3.1-pro-preview",
+      model: modelName || "gemini-3.5-flash",
       contents,
       config: {
         systemInstruction,
@@ -33,7 +33,11 @@ app.post("/api/gemini", async (req, res) => {
     });
 
     const response = await model;
-    res.json(response);
+    res.json({
+      text: response.text,
+      candidates: response.candidates,
+      usageMetadata: response.usageMetadata
+    });
   } catch (error: any) {
     console.error("Gemini API Error:", error);
     res.status(500).json({ error: error.message || "Failed to get response from Gemini." });

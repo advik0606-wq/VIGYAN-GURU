@@ -36,10 +36,20 @@ service cloud.firestore {
              data.email is string && data.email.size() <= 256;
     }
 
+    function isValidVigyanGuruUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'username', 'password', 'createdAt']) &&
+             data.keys().size() <= 6 &&
+             data.uid is string && data.uid.size() <= 128 &&
+             data.email is string && data.email.size() <= 256 &&
+             data.username is string && data.username.size() <= 128 &&
+             data.password is string && data.password.size() <= 128 &&
+             data.createdAt is string;
+    }
+
     function isValidReview(data) {
       return data.keys().hasAll(['uid', 'rating', 'review', 'createdAt']) &&
              data.keys().size() <= 6 &&
-             data.uid is string && data.uid == request.auth.uid &&
+             data.uid is string && (request.auth == null || data.uid == request.auth.uid) &&
              data.rating is number && data.rating >= 1 && data.rating <= 5 &&
              data.review is string && data.review.size() <= 1000 &&
              data.author is string && data.author.size() <= 128;
@@ -53,6 +63,32 @@ service cloud.firestore {
              data.message is string && data.message.size() <= 2000;
     }
 
+    function isValidQuiz(data) {
+      return data.keys().hasAll(['uid', 'title', 'questions', 'createdAt']) &&
+             data.keys().size() <= 6 &&
+             data.uid is string && data.uid.size() <= 128 &&
+             data.title is string && data.title.size() <= 256 &&
+             data.questions is list && data.questions.size() <= 100;
+    }
+
+    function isValidFlashcardDeck(data) {
+      return data.keys().hasAll(['uid', 'title', 'cards', 'createdAt']) &&
+             data.keys().size() <= 6 &&
+             data.uid is string && data.uid.size() <= 128 &&
+             data.title is string && data.title.size() <= 256 &&
+             data.cards is list && data.cards.size() <= 100;
+    }
+
+    function isValidStudyGroup(data) {
+      return data.keys().hasAll(['title', 'members', 'createdAt', 'createdBy']) &&
+             data.title is string && data.title.size() <= 256;
+    }
+
+    function isValidWeeklyTest(data) {
+      return data.keys().hasAll(['uid', 'topic', 'format', 'score', 'feedback', 'createdAt']) &&
+             data.uid is string && data.topic is string && data.format is string && data.score is number;
+    }
+
     // --- Collection Rules ---
 
     match /users/{userId} {
@@ -62,12 +98,18 @@ service cloud.firestore {
                     incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'email']);
     }
 
+    match /vigyan_guru_users/{email} {
+      allow get: if true;
+      allow create: if isValidVigyanGuruUser(incoming());
+      allow update: if isValidVigyanGuruUser(incoming());
+    }
+
     match /reviews/{reviewId} {
       allow list: if true; // Publicly readable reviews
       allow get: if true;
-      allow create: if isSignedIn() && isValidReview(incoming());
+      allow create: if isValidReview(incoming());
       // No updates for reviews for now to keep it simple, or only owner
-      allow update: if isSignedIn() && isOwner(existing().uid) && isValidReview(incoming()) &&
+      allow update: if isValidReview(incoming()) && (request.auth == null || existing().uid == request.auth.uid) &&
                     incoming().diff(existing()).affectedKeys().hasOnly(['rating', 'review', 'author']);
     }
 
@@ -76,6 +118,38 @@ service cloud.firestore {
       // Actually, usually contact messages are write-only for users.
       allow create: if isValidMessage(incoming());
       allow get: if isSignedIn() && (isOwner(existing().uid) || !existing().keys().hasAll(['uid']));
+    }
+
+    match /quizzes/{quizId} {
+      allow list: if true;
+      allow get: if true;
+      allow create: if isValidQuiz(incoming());
+      allow update: if isValidQuiz(incoming()) && (incoming().uid == existing().uid);
+      allow delete: if existing().uid == request.auth.uid || (request.auth == null && existing().uid is string); 
+    }
+
+    match /flashcard_decks/{deckId} {
+      allow list: if true;
+      allow get: if true;
+      allow create: if isValidFlashcardDeck(incoming());
+      allow update: if isValidFlashcardDeck(incoming()) && (incoming().uid == existing().uid);
+      allow delete: if existing().uid == request.auth.uid || (request.auth == null && existing().uid is string);
+    }
+
+    match /study_groups/{groupId} {
+      allow list: if true;
+      allow get: if true;
+      allow create: if isValidStudyGroup(incoming());
+      allow update: if isValidStudyGroup(incoming());
+      allow delete: if true;
+    }
+
+    match /weekly_tests/{testId} {
+      allow list: if true;
+      allow get: if true;
+      allow create: if isValidWeeklyTest(incoming());
+      allow update: if isValidWeeklyTest(incoming());
+      allow delete: if true;
     }
   }
 }

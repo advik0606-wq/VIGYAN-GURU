@@ -2,7 +2,8 @@
   "name": "Vigyan Guru",
   "description": "An intelligent AI companion for science and engineering projects, providing assembly guides, simulations, and expert tutoring.",
   "requestFramePermissions": [
-    "camera"
+    "camera",
+    "microphone"
   ],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API",

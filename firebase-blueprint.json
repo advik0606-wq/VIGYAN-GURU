@@ -38,6 +38,64 @@
         "createdAt": { "type": "string", "format": "date-time", "description": "When the message was sent" }
       },
       "required": ["name", "email", "message", "createdAt"]
+    },
+    "Quiz": {
+      "title": "Interactive Scientific Quiz",
+      "description": "Custom or AI-generated interactive multiple-choice quiz",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "UID of the creator" },
+        "author": { "type": "string", "description": "Display name of the author" },
+        "title": { "type": "string", "description": "Quiz title" },
+        "description": { "type": "string", "description": "Quiz description or learning goals" },
+        "questions": { "type": "array", "description": "Array of multiple choice questions" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the quiz was created" }
+      },
+      "required": ["uid", "title", "questions", "createdAt"]
+    },
+    "FlashcardDeck": {
+      "title": "Interactive Flashcard Deck",
+      "description": "Custom or AI-generated key definitions study deck",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "UID of the creator" },
+        "author": { "type": "string", "description": "Display name of the author" },
+        "title": { "type": "string", "description": "Deck title" },
+        "description": { "type": "string", "description": "Deck description" },
+        "cards": { "type": "array", "description": "Array of double-sided cards" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the deck was created" }
+      },
+      "required": ["uid", "title", "cards", "createdAt"]
+    },
+    "StudyGroup": {
+      "title": "Study Group / Circle",
+      "description": "Collaborative study circles for students to learn together, chat, and share resources.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Name of the study circle" },
+        "description": { "type": "string", "description": "Topics focused on" },
+        "members": { "type": "array", "description": "List of user profiles that are members" },
+        "sharedNotes": { "type": "array", "description": "Study note logs / group message board" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["title", "members", "createdAt", "createdBy"]
+    },
+    "WeeklyTest": {
+      "title": "Weekly Assessment Log",
+      "description": "Results and settings of oral or written weekly scientific tests.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Student UID" },
+        "topic": { "type": "string", "description": "Science focus topic" },
+        "format": { "type": "string", "enum": ["oral", "written"] },
+        "questionText": { "type": "string", "description": "Socratic prompt presented" },
+        "userResponse": { "type": "string", "description": "Response input from the student" },
+        "score": { "type": "number", "description": "Grade awarded from 0 to 100" },
+        "feedback": { "type": "string", "description": "Socratic analysis critique" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "topic", "format", "score", "feedback", "createdAt"]
     }
   },
   "firestore": {
@@ -52,6 +110,22 @@
     "/messages/{messageId}": {
       "schema": "Message",
       "description": "Collection of contact inquiries"
+    },
+    "/quizzes/{quizId}": {
+      "schema": "Quiz",
+      "description": "Collection of learning quizzes"
+    },
+    "/flashcard_decks/{deckId}": {
+      "schema": "FlashcardDeck",
+      "description": "Collection of studying flashcard decks"
+    },
+    "/study_groups/{groupId}": {
+      "schema": "StudyGroup",
+      "description": "Cooperative group workspaces"
+    },
+    "/weekly_tests/{testId}": {
+      "schema": "WeeklyTest",
+      "description": "Historical weekly grades logs"
     }
   }
 }
