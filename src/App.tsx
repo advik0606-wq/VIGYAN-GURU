@@ -36,7 +36,8 @@ import {
   Calendar,
   Mic,
   Volume2,
-  Bell
+  Bell,
+  MapPin
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import confetti from 'canvas-confetti';
@@ -88,6 +89,14 @@ export default function App() {
   const [inputText, setInputText] = useState('');
   const [currentSteps, setCurrentSteps] = useState<ProblemStep[]>([]);
   const [selectedLanguage, setSelectedLanguage] = useState('Hinglish');
+
+  const currentBranding = {
+    name: 'Gyan Guru',
+    short: 'G. Guru',
+    desc: 'Universal Socratic Guru • Subject & Project Guide',
+    bgBadge: 'bg-violet-600/10 text-violet-400 border-violet-500/20'
+  };
+
   const [isSubmittingContact, setIsSubmittingContact] = useState(false);
   const [contactSubmitted, setContactSubmitted] = useState(false);
   const [reviewRating, setReviewRating] = useState(0);
@@ -193,7 +202,7 @@ export default function App() {
       setAuthForm(prev => ({ ...prev, email: savedEmail }));
     }
 
-    // Check if there is an active local Vigyan Guru session first
+    // Check if there is an active local Gyan Guru session first
     const activeSessionStr = localStorage.getItem('vigyan_guru_session');
     if (activeSessionStr) {
       try {
@@ -328,7 +337,7 @@ export default function App() {
         if (Notification.permission === 'granted') {
           try {
             new Notification("🚨 Weekly Socratic Assessment Day is LIVE!", {
-              body: `Vigyan Guru: Today is your weekly ${testPreference.format} assessment. Topic: ${testPreference.topic}. Check the portal now!`,
+              body: `Gyan Guru: Today is your weekly ${testPreference.format} assessment. Topic: ${testPreference.topic}. Check the portal now!`,
               tag: 'vigyan-guru-test'
             });
           } catch (e) {
@@ -338,7 +347,7 @@ export default function App() {
           Notification.requestPermission().then(permission => {
             if (permission === 'granted') {
               new Notification("🚨 Weekly Socratic Assessment Day is LIVE!", {
-                body: `Vigyan Guru: Assess your science insights on ${testPreference.topic}!`,
+                body: `Gyan Guru: Assess your insights on ${testPreference.topic}!`,
                 tag: 'vigyan-guru-test'
               });
             }
@@ -365,7 +374,7 @@ export default function App() {
         }],
         sharedNotes: [
           {
-            sender: 'Vigyan Guru Bot',
+            sender: 'Gyan Guru Bot',
             text: `Welcome to "${newGroupTitle.trim()}" study circle! Share ideas, pool resources, and review quizzes together!`,
             createdAt: new Date().toISOString()
           }
@@ -660,7 +669,7 @@ export default function App() {
           return;
         }
 
-        // Create a custom robust Vigyan Guru Scholar Profile
+        // Create a custom robust Gyan Guru Scholar Profile
         const newLocalUser = {
           uid: 'scholar_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9),
           email: emailLower,
@@ -753,7 +762,7 @@ export default function App() {
       }
     } catch (error: any) {
       console.error("Scholar Auth Error:", error);
-      setAuthError('The Vigyan Guru authentication protocol encountered an anomaly. Please try again.');
+      setAuthError('The Gyan Guru authentication protocol encountered an anomaly. Please try again.');
     } finally {
       setIsAuthLoading(false);
     }
@@ -1109,7 +1118,7 @@ export default function App() {
             <div className="flex-1">
               <span className="inline-block px-4 py-1.5 rounded-full bg-violet-600/30 border border-violet-400/30 text-[10px] font-black uppercase tracking-widest mb-6">Heuristic Roadmap</span>
               <h3 className="text-3xl font-bold mb-4 tracking-tight leading-tight">Master Complex Projects without Shortcuts.</h3>
-              <p className="text-white/50 leading-relaxed mb-8">Vigyan Guru uses deep reasoning to identify exactly where your logic breaks, guiding you back to clarity without ever giving the answer away.</p>
+              <p className="text-white/50 leading-relaxed mb-8">{currentBranding.name} uses deep reasoning to identify exactly where your logic breaks, guiding you back to clarity without ever giving the answer away.</p>
               <button 
                 onClick={() => setActivePage('streaks')}
                 className="px-8 py-4 bg-white text-black rounded-2xl font-bold text-sm tracking-tight hover:scale-105 transition-transform"
@@ -1126,7 +1135,7 @@ export default function App() {
 
         {/* Footer with Contact Link */}
         <footer className={`mt-16 pt-8 border-t ${isLight ? 'border-gray-200 text-gray-800' : 'border-white/5 text-white/50'} flex flex-col sm:flex-row items-center justify-between gap-4 pb-12 opacity-80`}>
-          <p className="text-[10px] uppercase tracking-wider font-semibold">© {new Date().getFullYear()} Vigyan Guru • Academic Socratic Platform.</p>
+          <p className="text-[10px] uppercase tracking-wider font-semibold">© {new Date().getFullYear()} {currentBranding.name} • Academic Socratic Platform.</p>
           <div className="flex gap-6">
             <button 
               onClick={() => setActivePage('home')} 
@@ -1338,7 +1347,7 @@ export default function App() {
               <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-[#020205] rounded-full shadow-[0_0_8px_#22c55e]"></div>
             </div>
             <div>
-              <h2 className="font-bold text-white tracking-tight">Vigyan Guru</h2>
+              <h2 className="font-bold text-white tracking-tight">{currentBranding.name}</h2>
               <div className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_5px_#22c55e]"></span>
                 <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Heuristic Session Active</p>
@@ -1450,7 +1459,7 @@ export default function App() {
           <div className="mt-4 flex items-center justify-center gap-4">
              <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
              <p className="text-[9px] text-white/20 text-center uppercase tracking-[0.4em] font-black">
-               Vigyan Guru • Master of Heuristics
+               {currentBranding.name} • Master of Heuristics
              </p>
              <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
           </div>
@@ -1537,11 +1546,11 @@ export default function App() {
         {
           role: 'user',
           parts: [{
-            text: `Generate a multiple choice science quiz about "${topic}" with exactly ${count} educational questions.
+            text: `Generate a multiple choice educational quiz about "${topic}" (which could be any subject like science, math, history, literature, computer science, economics, etc.) with exactly ${count} educational questions.
 Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdowns except clean JSON:
 {
   "title": "A short engaging quiz title",
-  "description": "Engaging description summarizing the core topic and heuristics",
+  "description": "Engaging description summarizing the core topic and key concepts",
   "questions": [
     {
       "questionText": "The question string",
@@ -1562,7 +1571,7 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
         },
         body: JSON.stringify({
           contents,
-          systemInstruction: "You are Vigyan Guru, generating highly educational, scientifically accurate Multiple Choice Quizzes. Respond ONLY with a clean JSON output matching the requested schema. No other text or markdown tags.",
+          systemInstruction: "You are Gyan Guru, generating highly educational, accurate Multiple Choice Quizzes for any subject. Respond ONLY with a clean JSON output matching the requested schema. No other text or markdown tags.",
           model: "gemini-3.5-flash",
           temperature: 0.7,
         }),
@@ -1581,7 +1590,7 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
         quizJSON = JSON.parse(cleanStr);
       } catch (parseErr) {
         console.error("Failed to parse Gemini model response as JSON", resData, parseErr);
-        throw new Error("Vigyan Guru returned a complex cosmic layout. Try again.");
+        throw new Error("Gyan Guru returned a complex cosmic layout. Try again.");
       }
 
       if (!quizJSON.title || !quizJSON.questions || !Array.isArray(quizJSON.questions)) {
@@ -1622,16 +1631,16 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
         {
           role: 'user',
           parts: [{
-            text: `Generate a list of exactly ${count} science study flashcards about "${topic}".
-Each card must pair a key scientific definition/concept with its simplified, deep explanation.
+            text: `Generate a list of exactly ${count} study flashcards about "${topic}" (which could be any subject like science, math, history, literature, computer science, economics, language, etc.).
+Each card must pair a key definition/concept/event on the front with its simplified, deep explanation, analogy or facts on the back.
 Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdowns except clean JSON:
 {
   "title": "A short engaging deck title",
-  "description": "Engaging description of facts and mental models enclosed",
+  "description": "Engaging description of facts and concepts enclosed",
   "cards": [
     {
-      "front": "Term, formula, or concept name",
-      "back": "Clear, deep explanation, analogy, or critical definition"
+      "front": "Term, formula, event, question, or concept name",
+      "back": "Clear, deep explanation, analogy, or key definition"
     }
   ]
 }`
@@ -1646,7 +1655,7 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
         },
         body: JSON.stringify({
           contents,
-          systemInstruction: "You are Vigyan Guru, generating highly effective scientific Flashcards for retention. Respond ONLY with a clean JSON output matching the requested schema. No other text or markdown tags.",
+          systemInstruction: "You are Gyan Guru, generating highly effective study Flashcards for retention on any subject. Respond ONLY with a clean JSON output matching the requested schema. No other text or markdown tags.",
           model: "gemini-3.5-flash",
           temperature: 0.7,
         }),
@@ -1665,7 +1674,7 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
         deckJSON = JSON.parse(cleanStr);
       } catch (parseErr) {
         console.error("Failed to parse flashcard deck JSON", resData, parseErr);
-        throw new Error("Vigyan Guru returned a complex cosmic layout. Try again.");
+        throw new Error("Gyan Guru returned a complex cosmic layout. Try again.");
       }
 
       if (!deckJSON.title || !deckJSON.cards || !Array.isArray(deckJSON.cards)) {
@@ -1988,7 +1997,7 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
                     required
                     rows={4}
                     className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/40 focus:bg-white/[0.08] transition-all text-white placeholder-white/20 outline-none resize-none"
-                    placeholder="Share your thoughts on the Vigyan Guru experience..."
+                    placeholder={`Share your thoughts on the ${currentBranding.name} experience...`}
                   ></textarea>
                 </div>
               </div>
@@ -2262,7 +2271,7 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
                   <div className={`w-full h-full relative duration-500 transform-style-3d ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}>
                     {/* Front side */}
                     <div className="absolute inset-0 [backface-visibility:hidden] bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8 flex flex-col items-center justify-center text-center shadow-xl">
-                      <div className="text-[10px] font-bold text-sky-400 uppercase tracking-widest mb-4">Scientific Prompt / Concept</div>
+                      <div className="text-[10px] font-bold text-sky-400 uppercase tracking-widest mb-4">Study Prompt / Concept</div>
                       <p className="text-xl md:text-2xl font-serif text-white tracking-wide leading-relaxed">
                         {c.front}
                       </p>
@@ -2406,14 +2415,14 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
               <div className="space-y-6">
                 <div>
                   <label className="block text-[10px] font-bold uppercase text-white/40 tracking-widest mb-2">
-                    Scientific Topic of Study
+                    Topic / Subject of Study
                   </label>
                   <input
                     type="text"
                     required
                     value={aiTopic}
                     onChange={(e) => setAiTopic(e.target.value)}
-                    placeholder="e.g. Mendelian Genetics, Photoelectric Effect, Quantum Tunnelling..."
+                    placeholder="e.g. World War II History, Calculus Integration, Organic Chemistry, Shakespeare's Hamlet, Python..."
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-violet-500/50 transition-all font-sans"
                   />
                 </div>
@@ -2699,7 +2708,7 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
               </div>
               <h1 className="text-4xl md:text-5xl font-serif text-white tracking-tight">Intellect Studio</h1>
               <p className="text-sm text-white/40 mt-2 max-w-lg leading-relaxed uppercase tracking-wider text-[10px] font-semibold">
-                Simulate challenges and maximize scientific concept retention.
+                Simulate challenges and maximize multi-subject academic concept retention.
               </p>
             </div>
 
@@ -3255,7 +3264,7 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
                         </div>
 
                         {(activeGroup.sharedNotes || []).map((note: any, nIdx: number) => {
-                          const isGuru = note.sender === 'Vigyan Guru Bot';
+                          const isGuru = note.sender === 'Gyan Guru Bot' || note.sender === 'Vigyan Guru Bot';
                           return (
                             <div key={nIdx} className="space-y-1">
                               <div className="flex items-center gap-2 opacity-60">
@@ -3635,14 +3644,14 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
         <div className="flex items-center gap-3 md:gap-4 cursor-pointer" onClick={() => setActivePage('home')}>
           <Logo size="sm" />
           <div className="hidden sm:block">
-            <h1 className="text-base md:text-lg font-bold tracking-tight uppercase">Vigyan Guru</h1>
-            <p className={`text-[8px] md:text-[10px] uppercase tracking-[0.2em] ${isLight ? 'text-gray-500' : 'text-white/40'}`}>Science Guru • Project Guide</p>
+            <h1 className="text-base md:text-lg font-bold tracking-tight uppercase text-violet-600 dark:text-violet-400">{currentBranding.name}</h1>
+            <p className={`text-[8px] md:text-[10px] uppercase tracking-[0.2em] ${isLight ? 'text-gray-500' : 'text-white/40'}`}>{currentBranding.desc}</p>
           </div>
           <div className="block sm:hidden">
-            <h1 className="text-sm font-bold tracking-tight uppercase">V. Guru</h1>
+            <h1 className="text-sm font-bold tracking-tight uppercase text-violet-600 dark:text-violet-400">{currentBranding.short}</h1>
           </div>
         </div>
-          <div className="flex gap-2 md:gap-4 items-center animate-fade-in">
+          <div className="flex gap-2 md:gap-3 items-center animate-fade-in">
             {/* Contact Support Button */}
             <button
               onClick={() => setActivePage('contact')}

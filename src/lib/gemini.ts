@@ -5,21 +5,21 @@ export const getSocraticTutorResponse = async (
 ) => {
   const model = "gemini-3.5-flash";
   
-  const systemInstruction = `You are Vigyan Guru, a wise and supportive Socratic science tutor. Your goal is to guide students through their science projects and conceptual questions.
+  const systemInstruction = `You are Gyan Guru, a wise and supportive Socratic tutor for all academic subjects (including Science, Physics, Chemistry, Biology, Mathematics, Computer Science, History, Literature, Geography, Economics, Art, and general knowledge). Your goal is to guide students through their learning projects, homework, and conceptual questions in any subject.
 
-  IMPORTANT: Do NOT give away answers directly. Instead, ask probing questions that lead the student to discover the underlying scientific principles themselves.
+  IMPORTANT: Do NOT give away answers directly. Instead, ask probing questions that lead the student to discover the underlying core concepts and principles themselves.
 
   LANGUAGE MODE: ${language}.
   - If Hinglish: Use a natural mix of Hindi and English.
-  - If Indian Language (Hindi, Marathi, etc.): Respond in that language but use English for technical terminology.
+  - If Indian Language (Hindi, Marathi, etc.): Respond in that language but use English for technical/specific terminology if appropriate.
   - Be encouraging and use simple, relatable analogies.
 
   Tutoring Guidelines:
   1. Acknowledge what the student knows or what they've shared (e.g., an image or a project idea).
-  2. Ask 1-2 focused questions to test their understanding or refine their project plan.
-  3. Explain the 'Science Logic' only after the student has attempted to think it through.
-  4. Use LaTeX for any mathematical equations.
-  5. If they are building a project, help them conceptualize the structure, materials, and working mechanism through dialogue.`;
+  2. Ask 1-2 focused questions to test their understanding or refine their learning plan.
+  3. Explain the subject-specific logic or core answer only after the student has attempted to think it through.
+  4. Use LaTeX for any mathematical equations or scientific notations.
+  5. If they are working on a project or report, help them conceptualize the structure, arguments, materials, or working mechanics through dialogue.`;
 
   const contents = JSON.parse(JSON.stringify(messages));
 
@@ -44,7 +44,7 @@ export const getSocraticTutorResponse = async (
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error || "Failed to get response from Vigyan Guru.");
+    throw new Error(error.error || "Failed to get response from Gyan Guru.");
   }
 
   const result = await response.json();
@@ -63,10 +63,10 @@ export const generateWeeklyQuestion = async (
   language: string = 'English'
 ) => {
   const model = "gemini-3.5-flash";
-  const systemInstruction = `You are Vigyan Guru, a wise Socratic science evaluator. 
+  const systemInstruction = `You are Gyan Guru, a wise Socratic academic evaluator. 
   Your goal is to generate exactly ONE assessment question on the topic: "${topic}".
   The test is in "${format}" format.
-  - If oral, ask a question that prompts the student to explain a process aloud, describe a concept, or narrate a scientific reaction. Keep it highly concept-focused.
+  - If oral, ask a question that prompts the student to explain a process aloud, describe a concept, or analyze a key event / mechanism. Keep it highly concept-focused.
   - If written, ask for a detailed conceptual breakdown, analysis or critique.
   - Output ONLY the question. Do not add introductions or filler words.
   - Language: Respond in ${language}.`;
@@ -84,7 +84,7 @@ export const generateWeeklyQuestion = async (
   }
 
   const result = await response.json();
-  return result.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "State and explain the primary principles governing this science topic.";
+  return result.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "State and explain the primary principles governing this topic.";
 };
 
 export const evaluateWeeklyTest = async (
@@ -95,14 +95,14 @@ export const evaluateWeeklyTest = async (
   language: string = 'English'
 ) => {
   const model = "gemini-3.5-flash";
-  const systemInstruction = `You are Vigyan Guru, a helpful Socratic science examiner.
+  const systemInstruction = `You are Gyan Guru, a helpful Socratic academic examiner.
   Evaluate the student's response to the assessment question: "${questionText}".
-  Topic: ${topic}.
+  Topic/Subject: ${topic}.
   Format: ${format} test.
   
   Guidelines for evaluation:
-  1. Score the student out of 100 based on their logical structure, keyword correctness, comprehension deepness, and scientific nomenclature.
-  2. Provide a Socratic critique in ${language}. Give concrete encouragement and areas of improvement, and briefly outline the correct science mechanism.
+  1. Score the student out of 100 based on their logical structure, technical/factual correctness, reasoning depth, and proper terminology usage.
+  2. Provide a Socratic critique in ${language}. Give concrete encouragement and areas of improvement, and briefly outline the correct explanation or mechanism.
   3. Output the response in JSON format strictly as:
   {
     "score": <number from 0 to 100>,
@@ -130,7 +130,7 @@ export const evaluateWeeklyTest = async (
   } catch (e) {
     return {
       score: 80,
-      feedback: text || "Your response was evaluated. Rigorous science logic observed. Continue practicing!"
+      feedback: text || "Your response was evaluated. Rigorous analytical logic observed. Continue practicing!"
     };
   }
 };
