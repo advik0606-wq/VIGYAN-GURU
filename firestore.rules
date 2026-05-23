@@ -151,5 +151,13 @@ service cloud.firestore {
       allow update: if isValidWeeklyTest(incoming());
       allow delete: if true;
     }
+
+    match /trivia_games/{gameId} {
+      allow list: if true;
+      allow get: if true;
+      allow create: if true;
+      allow update: if true;
+      allow delete: if true;
+    }
   }
 }

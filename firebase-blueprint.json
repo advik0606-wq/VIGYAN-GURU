@@ -96,6 +96,25 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "topic", "format", "score", "feedback", "createdAt"]
+    },
+    "TriviaGame": {
+      "title": "Notes to Multiplayer Trivia Game",
+      "description": "AI-generated quiz game generated from study notes, persistent and synchronized in real-time.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "lobbyCode": { "type": "string" },
+        "hostUid": { "type": "string" },
+        "hostName": { "type": "string" },
+        "status": { "type": "string", "enum": ["lobby", "playing", "completed"] },
+        "questions": { "type": "array" },
+        "players": { "type": "object" },
+        "currentQuestionIdx": { "type": "number" },
+        "timerDuration": { "type": "number" },
+        "questionActiveTime": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "lobbyCode", "hostUid", "status", "questions", "players", "createdAt"]
     }
   },
   "firestore": {
@@ -126,6 +145,10 @@
     "/weekly_tests/{testId}": {
       "schema": "WeeklyTest",
       "description": "Historical weekly grades logs"
+    },
+    "/trivia_games/{gameId}": {
+      "schema": "TriviaGame",
+      "description": "Multiplayer educational trivia games generated from study notes"
     }
   }
 }

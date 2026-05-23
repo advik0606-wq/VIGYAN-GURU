@@ -37,11 +37,13 @@ import {
   Mic,
   Volume2,
   Bell,
-  MapPin
+  MapPin,
+  Zap
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import confetti from 'canvas-confetti';
 import { Logo } from './components/Logo';
+import { NotesToGameConverter } from './components/NotesToGameConverter';
 import { getSocraticTutorResponse, generateWeeklyQuestion, evaluateWeeklyTest } from './lib/gemini';
 import { Message, ProblemStep } from './types';
 import { 
@@ -100,7 +102,7 @@ export default function App() {
   // --- Quizzes and Flashcards Engine States ---
   const [quizzes, setQuizzes] = useState<any[]>([]);
   const [flashcards, setFlashcards] = useState<any[]>([]);
-  const [activePracticeTab, setActivePracticeTab] = useState<'quizzes' | 'flashcards' | 'tests' | 'groups'>('quizzes');
+  const [activePracticeTab, setActivePracticeTab] = useState<'quizzes' | 'flashcards' | 'tests' | 'groups' | 'games'>('quizzes');
   
   const [activeQuiz, setActiveQuiz] = useState<any | null>(null);
   const [quizScore, setQuizScore] = useState<{ correct: number; total: number; answered: number; finished: boolean } | null>(null);
@@ -1564,7 +1566,7 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
         },
         body: JSON.stringify({
           contents,
-          systemInstruction: "You are Gyan Guru, generating highly educational, accurate Multiple Choice Quizzes for any subject. Respond ONLY with a clean JSON output matching the requested schema. No other text or markdown tags.",
+          systemInstruction: "You are Vigyan Guru, generating highly educational, accurate Multiple Choice Quizzes for any subject. Respond ONLY with a clean JSON output matching the requested schema. No other text or markdown tags.",
           model: "gemini-3.5-flash",
           temperature: 0.7,
         }),
@@ -1583,7 +1585,7 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
         quizJSON = JSON.parse(cleanStr);
       } catch (parseErr) {
         console.error("Failed to parse Gemini model response as JSON", resData, parseErr);
-        throw new Error("Gyan Guru returned a complex cosmic layout. Try again.");
+        throw new Error("Vigyan Guru returned a complex cosmic layout. Try again.");
       }
 
       if (!quizJSON.title || !quizJSON.questions || !Array.isArray(quizJSON.questions)) {
@@ -1648,7 +1650,7 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
         },
         body: JSON.stringify({
           contents,
-          systemInstruction: "You are Gyan Guru, generating highly effective study Flashcards for retention on any subject. Respond ONLY with a clean JSON output matching the requested schema. No other text or markdown tags.",
+          systemInstruction: "You are Vigyan Guru, generating highly effective study Flashcards for retention on any subject. Respond ONLY with a clean JSON output matching the requested schema. No other text or markdown tags.",
           model: "gemini-3.5-flash",
           temperature: 0.7,
         }),
@@ -1667,7 +1669,7 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
         deckJSON = JSON.parse(cleanStr);
       } catch (parseErr) {
         console.error("Failed to parse flashcard deck JSON", resData, parseErr);
-        throw new Error("Gyan Guru returned a complex cosmic layout. Try again.");
+        throw new Error("Vigyan Guru returned a complex cosmic layout. Try again.");
       }
 
       if (!deckJSON.title || !deckJSON.cards || !Array.isArray(deckJSON.cards)) {
@@ -2787,6 +2789,18 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
               <Users className="w-4 h-4" />
               <span>Study Buddies ({studyGroups.length})</span>
             </button>
+            <button
+              onClick={() => setActivePracticeTab('games')}
+              type="button"
+              className={`pb-3 px-1 text-xs font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-2 ${
+                activePracticeTab === 'games' 
+                  ? 'border-violet-500 text-violet-400' 
+                  : 'border-transparent text-white/40 hover:text-white/70'
+              }`}
+            >
+              <Zap className="w-4 h-4 text-amber-400" />
+              <span>Notes to Game ⚡</span>
+            </button>
           </div>
 
           {/* Lobby rendering panels */}
@@ -3257,7 +3271,7 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
                         </div>
 
                         {(activeGroup.sharedNotes || []).map((note: any, nIdx: number) => {
-                          const isGuru = note.sender === 'Gyan Guru Bot' || note.sender === 'Vigyan Guru Bot';
+                          const isGuru = note.sender === 'Vigyan Guru Bot';
                           return (
                             <div key={nIdx} className="space-y-1">
                               <div className="flex items-center gap-2 opacity-60">
@@ -3458,6 +3472,10 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
                 </div>
               )}
             </div>
+          )}
+
+          {activePracticeTab === 'games' && (
+            <NotesToGameConverter user={user} isLight={isLight} />
           )}
         </div>
       </div>
