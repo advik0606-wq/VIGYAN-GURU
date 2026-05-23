@@ -1389,8 +1389,21 @@ export default function App() {
               {messages.map((msg, idx) => (
                 <motion.div
                   key={idx}
-                  initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  initial={{ 
+                    opacity: 0, 
+                    x: msg.role === 'user' ? 40 : -40, 
+                    scale: 0.95 
+                  }}
+                  animate={{ 
+                    opacity: 1, 
+                    x: 0, 
+                    scale: 1 
+                  }}
+                  transition={{ 
+                    type: "spring", 
+                    stiffness: 200, 
+                    damping: 20 
+                  }}
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div className={`max-w-[90%] md:max-w-[85%] rounded-[1.5rem] md:rounded-[2rem] shadow-2xl ${
@@ -2685,8 +2698,9 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
     }
 
     // Lobby View
-    const filteredQuizzes = quizzes;
-    const filteredDecks = flashcards;
+    // Filter quizzes so users only see their own created quizzes, restrictively scoped to their user account
+    const filteredQuizzes = quizzes.filter(q => q.uid === (user?.uid || 'anonymous'));
+    const filteredDecks = flashcards.filter(d => d.uid === (user?.uid || 'anonymous'));
 
     return (
       <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 md:py-12 flex flex-col items-center custom-scrollbar pb-32">
