@@ -1012,21 +1012,6 @@ export default function App() {
             {authMode === 'login' ? 'REGISTER NEW ACCOUNT' : 'LOGIN TO EXISTING'}
           </button>
         </div>
-
-        <div className="mt-6 flex items-center gap-4">
-          <div className="h-[1px] flex-1 bg-white/10"></div>
-          <span className="text-[9px] md:text-[10px] text-white/20 uppercase tracking-widest font-black">or utilize oauth</span>
-          <div className="h-[1px] flex-1 bg-white/10"></div>
-        </div>
-
-        <button 
-          onClick={handleGoogleSignIn}
-          disabled={isAuthLoading}
-          className="w-full mt-4 md:mt-6 py-3 md:py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-bold text-sm tracking-tighter hover:bg-white/10 transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50"
-        >
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-4 md:w-5 h-4 md:h-5" alt="Google" />
-          {isAuthLoading ? 'SYSCALL ACTIVE...' : 'ENGAGE WITH GOOGLE'}
-        </button>
       </motion.div>
     </div>
   </div>

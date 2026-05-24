@@ -174,25 +174,10 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
     setGenerationStep('Synthesizing notes and extracting key concepts...');
 
     try {
-      const systemInstruction = `You are Vigyan Guru, a helpful academic analyzer.
-      Review the pasted notes and identify exactly ${questionCount} of the most critical facts, concepts, mechanisms, historic dates, formulas, or terms.
+      const systemInstruction = `Review the pasted notes and identify exactly ${questionCount} of the most critical facts, concepts, mechanisms, historic dates, formulas, or terms.
       For each of these facts, construct ONE high-quality multiple choice question. It must be highly engaging, educational, and non-trivial.
-      
-      Provide a response STRICTLY in JSON format following this exact schema:
-      {
-        "title": "A highly punchy, descriptive game title (e.g., Photosynthesis Frenzy, Newton's Laws Challenge)",
-        "questions": [
-          {
-            "question": "A clear, beautifully phrased multiple choice question testing the concept",
-            "options": ["Option A", "Option B", "Option C", "Option D"],
-            "correctAnswerIdx": <integer index from 0 to 3 of the correct option>,
-            "explanation": "A Socratic explanation detailing why this option is correct and why other choices fall short",
-            "keyFact": "The core fact or concept from the notes that triggered this question"
-          }
-        ]
-      }
-
-      Do NOT wrap response in any markdown symbols except raw text or standard \`\`\`json. Output nothing else than the valid parsed JSON object.`;
+      Provide a Socratic explanation detailing why the correct option is indeed correct and why other options fall short.
+      Format the entire response STRICTLY matching the requested JSON schema options.`;
 
       const contents = [
         { 
@@ -200,6 +185,32 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
           parts: [{ text: `Here are my academic study notes. Extract concepts and generate a custom single player Socratic challenge game:\n\n${notesText}` }] 
         }
       ];
+
+      const responseSchema = {
+        type: "OBJECT",
+        properties: {
+          title: { type: "STRING", description: "Engaging and descriptive game title corresponding to the material" },
+          questions: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                question: { type: "STRING", description: "A beautifully phrased multiple choice question testing the concept" },
+                options: {
+                  type: "ARRAY",
+                  items: { type: "STRING" },
+                  description: "Full list of exactly 4 plausible choice options"
+                },
+                correctAnswerIdx: { type: "INTEGER", description: "Zero-based index of the correct option (0-3)" },
+                explanation: { type: "STRING", description: "Engaging Socratic explanation details of the correct answer" },
+                keyFact: { type: "STRING", description: "The core fact or concept from the notes that triggered this question" }
+              },
+              required: ["question", "options", "correctAnswerIdx", "explanation", "keyFact"]
+            }
+          }
+        },
+        required: ["title", "questions"]
+      };
 
       setGenerationStep('Submitting Socratic request to Vigyan Guru backend endpoint...');
       
@@ -212,18 +223,32 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
           contents,
           systemInstruction,
           model: "gemini-3.5-flash",
-          temperature: 0.8
+          temperature: 0.8,
+          responseMimeType: "application/json",
+          responseSchema
         })
       });
 
       if (!response.ok) {
-        throw new Error("Unable to contact the AI Study generator. Please verify your system's online status.");
+        let serverErrorMsg = "Unable to contact the AI Study generator. Please verify your system's online status.";
+        try {
+          const errData = await response.json();
+          if (errData && errData.error) {
+            serverErrorMsg = errData.error;
+          }
+        } catch (_) {}
+        throw new Error(serverErrorMsg);
       }
 
       setGenerationStep('Parsing scientific facts and building visual game interface...');
       const resData = await response.json();
-      const rawText = resData.text || "";
-      const cleanStr = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+      const rawText = resData.text || resData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      
+      let cleanStr = rawText;
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        cleanStr = jsonMatch[0];
+      }
       
       let parsedGame;
       try {
