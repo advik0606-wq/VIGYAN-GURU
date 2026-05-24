@@ -30,15 +30,16 @@ import {
   Trophy,
   X,
   HelpCircle,
-  Sun,
-  Moon,
   Users,
   Calendar,
   Mic,
   Volume2,
   Bell,
   MapPin,
-  Zap
+  Zap,
+  Share2,
+  Copy,
+  Check
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import confetti from 'canvas-confetti';
@@ -138,19 +139,9 @@ export default function App() {
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // --- Lighting Mode State ---
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    const saved = localStorage.getItem('vigyan_guru_theme');
-    return (saved === 'light' || saved === 'dark') ? saved : 'dark';
-  });
-
-  const toggleTheme = () => {
-    setTheme(prev => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      localStorage.setItem('vigyan_guru_theme', next);
-      return next;
-    });
-  };
+  // --- Lighting Mode State (Fixed to Deep Cosmos theme) ---
+  const [theme] = useState<'dark' | 'light'>('dark');
+  const toggleTheme = () => {};
 
   // --- Study Friends Circles ---
   const [studyGroups, setStudyGroups] = useState<any[]>([]);
@@ -160,6 +151,10 @@ export default function App() {
   const [newGroupDesc, setNewGroupDesc] = useState('');
   const [groupNoteText, setGroupNoteText] = useState('');
   const [searchGroupQuery, setSearchGroupQuery] = useState('');
+  const [pendingJoinCode, setPendingJoinCode] = useState<string | null>(null);
+  const [showShareId, setShowShareId] = useState<string | null>(null);
+  const [circleInviteCodeInput, setCircleInviteCodeInput] = useState<string>('');
+  const [copiedCircleId, setCopiedCircleId] = useState<boolean>(false);
 
   // --- Weekly Assessments ---
   const [weeklyTestHistory, setWeeklyTestHistory] = useState<any[]>([]);
@@ -247,6 +242,56 @@ export default function App() {
 
     return () => unsubscribe();
   }, []);
+
+  // --- Share/Join Study Circles deep-linking hook ---
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const joinCircleId = params.get('joinCircle') || params.get('circleId') || params.get('circleCode');
+    if (joinCircleId) {
+      setActivePage('practice');
+      setActivePracticeTab('groups');
+      setPendingJoinCode(joinCircleId);
+
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState(null, '', cleanUrl);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (pendingJoinCode) {
+      if (user) {
+        const joinSharedGroup = async () => {
+          const fetchedGroup = studyGroups.find((g: any) => g.id === pendingJoinCode);
+          if (fetchedGroup) {
+            await joinStudyGroup(fetchedGroup);
+            setPendingJoinCode(null);
+          } else {
+            try {
+              const docSnap = await getDoc(doc(db, 'study_groups', pendingJoinCode));
+              if (docSnap.exists()) {
+                const groupObj = { id: docSnap.id, ...docSnap.data() };
+                await joinStudyGroup(groupObj);
+              } else {
+                alert("The invitation code matches a study group that doesn't exist or has been deleted.");
+              }
+            } catch (err: any) {
+              console.error("Error fetching shared study group details:", err);
+            } finally {
+              setPendingJoinCode(null);
+            }
+          }
+        };
+        joinSharedGroup();
+      } else {
+        const wantToJoin = window.confirm("🔗 Vigyan Guru: You received a study circle invitation! Please log in or sign up first to join this cooperative group.");
+        if (wantToJoin) {
+          setActivePage('auth');
+        } else {
+          setPendingJoinCode(null);
+        }
+      }
+    }
+  }, [user, pendingJoinCode, studyGroups]);
 
   useEffect(() => {
     // Synchronize Quizzes in real-time
@@ -416,6 +461,42 @@ export default function App() {
     } catch (err: any) {
       console.error("Failed to join study group:", err);
       handleFirestoreError(err, OperationType.WRITE, `study_groups/${group.id}`);
+    }
+  };
+
+  const joinGroupByInviteCode = async (code: string) => {
+    const cleanedCode = code.trim();
+    if (!cleanedCode) {
+      alert("Please enter a valid study group invitation code first.");
+      return;
+    }
+    if (!user) {
+      alert("Please authenticate or log into your account to connect to Study Circles!");
+      setActivePage('auth');
+      return;
+    }
+
+    try {
+      // Find if group is already in our loaded snapshots list
+      const existing = studyGroups.find(g => g.id === cleanedCode);
+      if (existing) {
+        await joinStudyGroup(existing);
+        setCircleInviteCodeInput('');
+        return;
+      }
+
+      // Otherwise query db directly
+      const docSnap = await getDoc(doc(db, 'study_groups', cleanedCode));
+      if (docSnap.exists()) {
+        const groupObj = { id: docSnap.id, ...docSnap.data() };
+        await joinStudyGroup(groupObj);
+        setCircleInviteCodeInput('');
+      } else {
+        alert(`Study Circle code matching "${cleanedCode}" was not found. Please verify the code.`);
+      }
+    } catch (err: any) {
+      console.error("Failed to join study group by code:", err);
+      alert("Unable to fetch circle details. Please try again or verify the invitation code.");
     }
   };
 
@@ -3262,6 +3343,16 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
 
                     <div className="flex gap-2">
                       <button
+                        onClick={() => {
+                          setShowShareId(activeGroup.id);
+                          setCopiedCircleId(false);
+                        }}
+                        className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-1.5"
+                      >
+                        <Share2 className="w-3.5 h-3.5" />
+                        <span>Share Circle</span>
+                      </button>
+                      <button
                         onClick={() => leaveStudyGroup(activeGroup)}
                         className="px-3.5 py-2 rounded-xl bg-red-650/10 hover:bg-red-600/20 border border-red-500/30 text-red-400 text-[10px] font-bold uppercase tracking-widest transition-all"
                       >
@@ -3371,6 +3462,34 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
                     </button>
                   </div>
 
+                  {/* Enter Circle Code Block */}
+                  <div className={`p-5 rounded-2xl border ${isLight ? 'bg-white border-gray-150 text-gray-950 shadow-sm' : 'bg-white/2 border-white/5 text-white'} flex flex-col md:flex-row gap-4 justify-between items-start md:items-center`}>
+                    <div className="max-w-md">
+                      <h4 className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-[#0d0d1e] font-extrabold' : 'text-emerald-400'}`}>Have an Invitation Code?</h4>
+                      <p className={`text-[10px] mt-1 leading-relaxed ${isLight ? 'text-gray-650 font-medium' : 'text-white/50'}`}>
+                        Enter the unique invitation code sent by your study buddy to instantly join their circle and participate in live Socratic peer reviews!
+                      </p>
+                    </div>
+                    <div className="flex gap-2 w-full md:w-auto md:max-w-xs shrink-0">
+                      <input
+                        type="text"
+                        placeholder="Paste Circle ID/Code"
+                        value={circleInviteCodeInput}
+                        onChange={(e) => setCircleInviteCodeInput(e.target.value)}
+                        className={`px-3 py-2 text-xs rounded-xl bg-black/40 border border-white/10 text-white placeholder-white/30 outline-none w-full focus:border-indigo-500 transition-all ${
+                          isLight ? 'bg-white text-gray-950 border-gray-300 placeholder-gray-400' : ''
+                        }`}
+                      />
+                      <button
+                        onClick={() => joinGroupByInviteCode(circleInviteCodeInput)}
+                        type="button"
+                        className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap"
+                      >
+                        Connect
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Circle search */}
                   <div className="relative">
                     <input
@@ -3378,8 +3497,8 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
                       value={searchGroupQuery}
                       onChange={(e) => setSearchGroupQuery(e.target.value)}
                       placeholder="Search study groups by topic or scholars..."
-                      className={`w-full bg-[#080815] border border-white/10 rounded-xl px-4 py-3 text-xs outline-none focus:border-emerald-500/50 text-white ${
-                        isLight ? 'bg-white text-black border-gray-300' : ''
+                      className={`w-full bg-[#080815] border border-[#ffffff10] rounded-xl px-4 py-3 text-xs outline-none focus:border-emerald-500/50 text-white ${
+                        isLight ? 'bg-white text-black border-gray-350' : ''
                       }`}
                     />
                   </div>
@@ -3467,22 +3586,136 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
 
                               <div className="mt-6 pt-4 border-t border-gray-200/40 dark:border-white/5 flex items-center justify-between">
                                 <span className="text-[8px] opacity-40">by {g.createdByAuthor}</span>
-                                <button
-                                  onClick={() => joinStudyGroup(g)}
-                                  className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
-                                    isMember
-                                      ? 'bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-600 hover:text-white'
-                                      : 'bg-indigo-600 hover:bg-indigo-505 text-white'
-                                  }`}
-                                >
-                                  {isMember ? 'Open Workspace' : 'Join Circle'}
-                                </button>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setShowShareId(g.id);
+                                      setCopiedCircleId(false);
+                                    }}
+                                    className={`p-2 rounded-lg border text-[10px] uppercase font-black tracking-widest hover:scale-[1.03] transition-all flex items-center justify-center gap-1 shrink-0 ${
+                                      isLight ? 'bg-gray-100 border-gray-300 text-gray-805 hover:bg-gray-205' : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10'
+                                    }`}
+                                    title="Get Share Link & Code"
+                                  >
+                                    <Share2 className="w-3.5 h-3.5 text-indigo-400" />
+                                  </button>
+                                  <button
+                                    onClick={() => joinStudyGroup(g)}
+                                    className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+                                      isMember
+                                        ? 'bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-600 hover:text-white'
+                                        : 'bg-indigo-600 hover:bg-indigo-505 text-white'
+                                    }`}
+                                  >
+                                    {isMember ? 'Open Workspace' : 'Join Circle'}
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           );
                         })}
                     </div>
                   )}
+
+                  {/* Share Circle Modal */}
+                  <AnimatePresence>
+                    {showShareId && (
+                      <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          className={`max-w-md w-full p-6 md:p-8 rounded-[2rem] border shadow-2xl relative ${
+                            isLight ? 'bg-white border-gray-150 text-gray-950 shadow-xl' : 'bg-[#0e0e1e] border-white/10 text-white'
+                          }`}
+                        >
+                          <button
+                            onClick={() => setShowShareId(null)}
+                            className={`absolute top-5 right-5 p-2 rounded-full transition-colors ${
+                              isLight ? 'hover:bg-gray-100 text-gray-400 hover:text-gray-750' : 'hover:bg-white/10 text-white/50 hover:text-white'
+                            }`}
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-2xl">
+                              <Users className="w-6 h-6" />
+                            </div>
+                            <div className="text-left">
+                              <h4 className="text-base font-black font-serif italic">Share Study Circle</h4>
+                              <p className={`text-[10px] font-sans ${isLight ? 'text-gray-500' : 'text-white/40'}`}>
+                                Invite your classmates & peers to study together!
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-4 pt-2 text-left">
+                            {/* Invite Link Option */}
+                            <div className="space-y-1.5">
+                              <label className={`block text-[9px] font-bold uppercase tracking-widest ${isLight ? 'text-gray-500' : 'text-white/50'}`}>
+                                Direct Invite Link
+                              </label>
+                              <div className="flex gap-1.5 items-center">
+                                <input
+                                  type="text"
+                                  readOnly
+                                  value={`${window.location.origin}${window.location.pathname}?joinCircle=${showShareId}`}
+                                  className={`flex-1 px-3 py-2.5 text-xs rounded-xl bg-black/40 border border-white/5 text-white/70 select-all outline-none font-mono ${
+                                    isLight ? 'bg-gray-50 border-gray-200 text-gray-800' : ''
+                                  }`}
+                                />
+                                <button
+                                  onClick={() => {
+                                    const inviteUrl = `${window.location.origin}${window.location.pathname}?joinCircle=${showShareId}`;
+                                    navigator.clipboard.writeText(inviteUrl);
+                                    setCopiedCircleId(true);
+                                    setTimeout(() => setCopiedCircleId(false), 2000);
+                                  }}
+                                  className="p-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all cursor-pointer shrink-0"
+                                  title="Copy link"
+                                >
+                                  {copiedCircleId ? <Check className="w-4 h-4 text-emerald-300 animate-pulse" /> : <Copy className="w-4 h-4" />}
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Invite Code Option */}
+                            <div className="space-y-1.5">
+                              <label className={`block text-[9px] font-bold uppercase tracking-widest ${isLight ? 'text-[#35354e] font-black' : 'text-white/50'}`}>
+                                Circle Invite Code (ID)
+                              </label>
+                              <div className="flex gap-1.5 items-center">
+                                <input
+                                  type="text"
+                                  readOnly
+                                  value={showShareId}
+                                  className={`flex-1 px-3 py-2.5 text-xs rounded-xl bg-black/40 border border-white/5 text-center select-all outline-none font-mono text-emerald-400 font-extrabold ${
+                                    isLight ? 'bg-gray-50 border-gray-200 text-emerald-650' : ''
+                                  }`}
+                                />
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(showShareId);
+                                    setCopiedCircleId(true);
+                                    setTimeout(() => setCopiedCircleId(false), 2000);
+                                  }}
+                                  className="p-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-all cursor-pointer shrink-0"
+                                  title="Copy invite code"
+                                >
+                                  {copiedCircleId ? <Check className="w-4 h-4 text-emerald-350 animate-pulse" /> : <Copy className="w-4 h-4" />}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className={`mt-6 pt-5 border-t text-[10px] text-center leading-relaxed ${isLight ? 'border-gray-100 text-gray-400 font-medium' : 'border-white/5 text-white/30'}`}>
+                            ⚡ Clicking either button copies information to your clipboard. Share it in student portals, WhatsApp, or email networks!
+                          </div>
+                        </motion.div>
+                      </div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
             </div>
@@ -3694,19 +3927,7 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
               <span className="hidden md:inline text-[10px] uppercase font-black tracking-widest px-1">Contact</span>
             </button>
 
-            {/* Theme Toggle Button */}
-            <button
-              onClick={toggleTheme}
-              className={`p-2 rounded-xl transition-all duration-300 flex items-center justify-center ${
-                isLight 
-                  ? 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 shadow-sm' 
-                  : 'bg-white/5 hover:bg-white/12 text-white/80 border border-white/5'
-              }`}
-              title={isLight ? "Change Canopy to Deep Cosmos" : "Illuminate Solar Prismatic Day"}
-              type="button"
-            >
-              {isLight ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-amber-400" />}
-            </button>
+
 
             {user ? (
               <div className="flex gap-2 md:gap-4 items-center">

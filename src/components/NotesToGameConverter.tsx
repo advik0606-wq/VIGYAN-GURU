@@ -278,24 +278,28 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
             className="w-full max-w-4xl mx-auto"
           >
             <div className={`p-6 md:p-8 rounded-3xl border ${
-              isLight ? 'bg-white border-gray-200 text-gray-950 shadow-sm' : 'bg-white/2 border-white/5 text-white'
+              isLight ? 'bg-white border-gray-100 text-gray-950 shadow-[0_8px_30px_rgb(0,0,0,0.04)]' : 'bg-[#0f0f1c] border-white/5 text-white'
             } transition-all`}>
               
               {/* Socratic Header Block */}
               <div className="flex items-center gap-4 mb-6">
-                <div className="p-3 bg-violet-600/10 text-violet-500 rounded-2xl">
+                <div className="p-3 bg-violet-600/10 text-violet-600 dark:text-violet-400 rounded-2xl">
                   <Brain className="w-7 h-7" />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold tracking-tight">Convert Notes to Study Game</h3>
-                  <p className={`text-xs opacity-60 mt-0.5 ${isLight ? 'text-gray-600' : 'text-gray-300'}`}>
+                  <p className={`text-xs mt-0.5 ${isLight ? 'text-gray-650 font-medium' : 'text-gray-300 opacity-60'}`}>
                     Paste your raw lectures, books, wiki articles, or study sheets. Vigyan Guru will extract facts to generate a personalized single-player Socratic trivia deck instantly!
                   </p>
                 </div>
               </div>
 
               {errorMsg && (
-                <div className="flex items-center gap-2.5 p-4 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-2xl text-xs mb-6">
+                <div className={`flex items-center gap-2.5 p-4 rounded-2xl text-xs mb-6 border ${
+                  isLight 
+                    ? 'bg-rose-50 border-rose-200 text-rose-800 font-semibold' 
+                    : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                }`}>
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
@@ -305,7 +309,7 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
                 
                 {/* Notes Input Area */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-2 opacity-75">
+                  <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isLight ? 'text-gray-800' : 'text-gray-300 opacity-75'}`}>
                     Your Subject Notes or Study Material
                   </label>
                   <textarea
@@ -318,7 +322,7 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
                       isLight ? 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400' : 'bg-white/5 border-white/10 text-white placeholder-white/25'
                     }`}
                   ></textarea>
-                  <div className="flex justify-between text-[11px] opacity-50 mt-1.5 font-mono">
+                  <div className={`flex justify-between text-[11px] mt-1.5 font-mono ${isLight ? 'text-gray-600 font-medium' : 'text-white/40'}`}>
                     <span>Characters: {notesText.length}</span>
                     <span>Min length target: 20 chars</span>
                   </div>
@@ -329,7 +333,7 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
                   
                   {/* Select size of game */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider mb-2.5 opacity-75">
+                    <label className={`block text-xs font-bold uppercase tracking-wider mb-2.5 ${isLight ? 'text-gray-800' : 'text-gray-300 opacity-75'}`}>
                       Question Count
                     </label>
                     <div className="flex gap-2">
@@ -342,7 +346,7 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
                             questionCount === num 
                               ? 'bg-violet-600 border-violet-500 text-white font-extrabold shadow-md shadow-violet-500/20' 
                               : isLight 
-                                ? 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100' 
+                                ? 'bg-gray-50 border-gray-200 text-gray-800 hover:bg-gray-100' 
                                 : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
                           }`}
                         >
@@ -354,7 +358,7 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
 
                   {/* Select seconds allowed */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider mb-2.5 opacity-75">
+                    <label className={`block text-xs font-bold uppercase tracking-wider mb-2.5 ${isLight ? 'text-gray-800' : 'text-gray-300 opacity-75'}`}>
                       Timer Per Fact
                     </label>
                     <div className="flex gap-2">
@@ -367,7 +371,7 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
                             timerDuration === sec 
                               ? 'bg-sky-600 border-sky-500 text-white font-extrabold shadow-md shadow-sky-500/20' 
                               : isLight 
-                                ? 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100' 
+                                ? 'bg-gray-50 border-gray-200 text-gray-800 hover:bg-gray-100' 
                                 : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
                           }`}
                         >
@@ -398,15 +402,17 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
               </form>
 
               {isGenerating && (
-                <div className="mt-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs text-center animate-pulse">
+                <div className={`mt-4 p-4 rounded-xl text-xs text-center animate-pulse border ${
+                  isLight 
+                    ? 'bg-amber-50 border-amber-200 text-amber-900 font-semibold shadow-sm' 
+                    : 'bg-amber-500/10 border-amber-500/20 text-amber-500'
+                }`}>
                   ⚡ Vigyan Guru is synthesizing facts dynamically to formulate a high-yield learning session.
                 </div>
               )}
             </div>
           </motion.div>
-        )}
-
-        {/* --- PLAYING GAME SCREEN --- */}
+        )}        {/* --- PLAYING GAME SCREEN --- */}
         {viewState === 'playing' && questions.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -416,10 +422,10 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
           >
             {/* Top Stat Bar */}
             <div className={`p-4 md:p-6 rounded-3xl border flex items-center justify-between gap-4 ${
-              isLight ? 'bg-white border-gray-200 shadow-sm text-gray-950' : 'bg-white/2 border-white/5 text-white'
+              isLight ? 'bg-white border-gray-150 shadow-sm text-gray-950' : 'bg-[#0f0f1c] border-white/5 text-white'
             }`}>
               <div>
-                <span className="text-[10px] font-bold text-violet-400 uppercase tracking-widest block">
+                <span className={`text-[10px] font-bold uppercase tracking-widest block ${isLight ? 'text-violet-750 font-black' : 'text-violet-400'}`}>
                   Question {currentIdx + 1} of {questions.length}
                 </span>
                 <h4 className="text-sm font-black font-serif italic truncate mt-0.5 max-w-[280px] sm:max-w-md block">
@@ -430,14 +436,14 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
               {/* Score and Dynamic Timer Display */}
               <div className="flex items-center gap-5">
                 <div className="text-right">
-                  <span className="text-[9px] uppercase font-black opacity-40 block">Correct score</span>
-                  <span className="text-base font-black font-mono text-emerald-400">{score}</span>
+                  <span className={`text-[9px] uppercase font-black block ${isLight ? 'text-gray-500 font-bold' : 'opacity-40'}`}>Correct score</span>
+                  <span className={`text-base font-black font-mono ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>{score}</span>
                 </div>
                 
                 {timerDuration > 0 && (
-                  <div className="flex items-center gap-2 pl-4 border-l border-white/10">
-                    <Clock className="w-4 h-4 text-sky-400 animate-pulse" />
-                    <span className="text-xl font-mono font-black text-sky-400">{timeLeft}s</span>
+                  <div className={`flex items-center gap-2 pl-4 border-l ${isLight ? 'border-gray-200' : 'border-white/10'}`}>
+                    <Clock className={`w-4 h-4 animate-pulse ${isLight ? 'text-sky-600' : 'text-sky-400'}`} />
+                    <span className={`text-xl font-mono font-black ${isLight ? 'text-sky-700' : 'text-sky-400'}`}>{timeLeft}s</span>
                   </div>
                 )}
               </div>
@@ -445,11 +451,11 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
 
             {/* Main Interactive Question Card */}
             <div className={`p-6 md:p-8 rounded-3xl border ${
-              isLight ? 'bg-white border-gray-200 text-gray-950 shadow-sm' : 'bg-white/2 border-white/5 text-white'
+              isLight ? 'bg-white border-gray-150 text-gray-950 shadow-sm' : 'bg-[#0f0f1c] border-white/5 text-white'
             }`}>
               
               {/* Progress Indicator line */}
-              <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden mb-6">
+              <div className={`w-full h-1.5 rounded-full overflow-hidden mb-6 ${isLight ? 'bg-gray-100' : 'bg-white/5'}`}>
                 <div 
                   className="h-full bg-gradient-to-r from-violet-600 to-sky-500 transition-all duration-300"
                   style={{ width: `${((currentIdx + (hasSubmitted ? 1 : 0)) / questions.length) * 100}%` }}
@@ -473,16 +479,24 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
                     : 'bg-white/2 border-white/5 text-white hover:bg-white/5';
                   
                   if (isSelected && !hasSubmitted) {
-                    optionStyles = 'bg-violet-600/10 border-violet-500 text-violet-400 font-extrabold';
+                    optionStyles = isLight 
+                      ? 'bg-violet-50 border-violet-500 text-violet-800 font-extrabold ring-1 ring-violet-500/20' 
+                      : 'bg-violet-600/10 border-violet-500 text-violet-400 font-extrabold';
                   }
 
                   if (hasSubmitted) {
                     if (isCorrectAnswer) {
-                      optionStyles = 'bg-green-500/10 border-green-500 text-green-400 font-extrabold';
+                      optionStyles = isLight 
+                        ? 'bg-green-50 border-green-500 text-green-800 font-extrabold ring-1 ring-green-500/10' 
+                        : 'bg-green-500/10 border-green-500 text-green-400 font-extrabold';
                     } else if (isSelected) {
-                      optionStyles = 'bg-rose-500/10 border-rose-500 text-rose-400';
+                      optionStyles = isLight 
+                        ? 'bg-rose-50 border-rose-500 text-rose-800 font-bold' 
+                        : 'bg-rose-500/10 border-rose-500 text-rose-400';
                     } else {
-                      optionStyles = 'opacity-35 border-white/5';
+                      optionStyles = isLight 
+                        ? 'opacity-35 border-gray-100 bg-gray-50/50' 
+                        : 'opacity-35 border-white/5';
                     }
                   }
 
@@ -496,20 +510,22 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
                       <div className="flex items-center gap-3">
                         <div className={`w-6.5 h-6.5 rounded-full flex items-center justify-center text-xs font-mono border ${
                           isCorrectAnswer && hasSubmitted
-                            ? 'bg-green-500 border-green-400 text-white'
+                            ? 'bg-green-500 border-green-400 text-white font-extrabold'
                             : isSelected && hasSubmitted
-                              ? 'bg-rose-500 border-rose-400 text-white'
+                              ? 'bg-rose-500 border-rose-400 text-white font-bold'
                               : isSelected
-                                ? 'bg-violet-500 border-violet-400 text-white'
-                                : 'border-white/10 opacity-70'
+                                ? 'bg-violet-500 border-violet-400 text-white font-bold'
+                                : isLight 
+                                  ? 'border-gray-300 text-gray-600' 
+                                  : 'border-white/10 opacity-70'
                         }`}>
                           {String.fromCharCode(65 + i)}
                         </div>
                         <span className="leading-snug">{option}</span>
                       </div>
 
-                      {hasSubmitted && isCorrectAnswer && <Check className="w-5 h-5 text-green-400 flex-shrink-0" />}
-                      {hasSubmitted && isSelected && !isCorrectAnswer && <X className="w-5 h-5 text-rose-400 flex-shrink-0" />}
+                      {hasSubmitted && isCorrectAnswer && <Check className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />}
+                      {hasSubmitted && isSelected && !isCorrectAnswer && <X className="w-5 h-5 text-rose-600 dark:text-rose-400 flex-shrink-0" />}
                     </button>
                   );
                 })}
@@ -521,22 +537,22 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
-                    className="mt-6 pt-6 border-t border-white/10 space-y-4 overflow-hidden"
+                    className={`mt-6 pt-6 border-t ${isLight ? 'border-gray-100' : 'border-white/10'} space-y-4 overflow-hidden`}
                   >
                     <div className={`p-4 rounded-2xl border ${
-                      isLight ? 'bg-violet-500/5 border-violet-500/10' : 'bg-violet-500/[0.03] border-violet-500/10'
+                      isLight ? 'bg-violet-500/[0.03] border-violet-500/15' : 'bg-violet-500/[0.03] border-violet-500/10'
                     }`}>
-                      <div className="flex gap-2 items-center text-xs font-bold text-violet-400 uppercase tracking-wider mb-2">
+                      <div className={`flex gap-2 items-center text-xs font-bold uppercase tracking-wider mb-2 ${isLight ? 'text-violet-800' : 'text-violet-400'}`}>
                         <BookOpen className="w-3.5 h-3.5" />
                         <span>Socratic Explanation</span>
                       </div>
-                      <p className={`text-xs leading-relaxed ${isLight ? 'text-gray-700' : 'text-gray-300'}`}>
+                      <p className={`text-xs leading-relaxed ${isLight ? 'text-gray-800 font-medium' : 'text-gray-300'}`}>
                         {questions[currentIdx].explanation}
                       </p>
                     </div>
 
-                    <div className="flex gap-2 items-center text-[10px] font-mono opacity-50 px-2">
-                      <span className="font-bold text-amber-400 uppercase tracking-wider">Concept Key:</span>
+                    <div className={`flex gap-2 items-center text-[10px] font-mono px-2 ${isLight ? 'text-gray-650' : 'opacity-50'}`}>
+                      <span className={`font-bold uppercase tracking-wider ${isLight ? 'text-amber-800' : 'text-amber-400'}`}>Concept Key:</span>
                       <span className="truncate">{questions[currentIdx].keyFact}</span>
                     </div>
 
@@ -558,14 +574,16 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
             <div className="flex justify-between items-center px-2">
               <button
                 onClick={handleExitGame}
-                className="text-[10px] font-black uppercase tracking-wider opacity-50 hover:opacity-100 transition-opacity flex items-center gap-1 cursor-pointer"
+                className={`text-[10px] font-black uppercase tracking-wider transition-opacity flex items-center gap-1 cursor-pointer ${
+                  isLight ? 'text-gray-600 hover:text-gray-900 font-black' : 'opacity-50 hover:opacity-100 text-white'
+                }`}
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Abort Study Session</span>
               </button>
               
               {!hasSubmitted && timerDuration > 0 && (
-                <span className="text-[10px] font-mono opacity-40">
+                <span className={`text-[10px] font-mono ${isLight ? 'text-gray-500 font-semibold' : 'opacity-40 text-white'}`}>
                   Select answer card before time expires!
                 </span>
               )}
@@ -582,7 +600,7 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
             className="w-full max-w-2xl mx-auto"
           >
             <div className={`p-8 md:p-10 rounded-3xl border text-center ${
-              isLight ? 'bg-white border-gray-200 text-gray-950 shadow-sm' : 'bg-white/2 border-white/5 text-white'
+              isLight ? 'bg-white border-gray-150 text-gray-950 shadow-sm' : 'bg-[#0f0f1c] border-white/5 text-white'
             }`}>
               
               <div className="w-16 h-16 bg-gradient-to-tr from-amber-500 to-amber-300 text-white rounded-full mx-auto flex items-center justify-center mb-6 shadow-xl shadow-amber-500/10">
@@ -590,27 +608,27 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
               </div>
 
               <h2 className="text-3xl font-black font-serif italic mb-2">Subject Mastery Synced!</h2>
-              <p className={`text-xs opacity-65 mb-6 max-w-md mx-auto ${isLight ? 'text-gray-600' : 'text-gray-300'}`}>
+              <p className={`text-xs mb-6 max-w-md mx-auto ${isLight ? 'text-gray-750 font-medium' : 'text-gray-300 opacity-65'}`}>
                 You have successfully run the entire Socratic challenge cycle. Here is your evaluation score card.
               </p>
 
               {/* Large Score Card */}
               <div className={`inline-flex items-center gap-6 p-6 rounded-2xl border mb-8 ${
-                isLight ? 'bg-gray-50 border-gray-100' : 'bg-white/2 border-white/5'
+                isLight ? 'bg-gray-50 border-gray-150' : 'bg-white/2 border-white/5'
               }`}>
-                <div className="text-center pr-6 border-r border-white/10">
-                  <span className="block text-[9px] uppercase tracking-widest font-black opacity-40 mb-1">Score Card</span>
-                  <span className="text-4xl font-extrabold font-mono text-violet-400">
-                    {score}<span className="text-xl text-white/30 font-normal">/{questions.length}</span>
+                <div className={`text-center pr-6 border-r ${isLight ? 'border-gray-200' : 'border-white/10'}`}>
+                  <span className={`block text-[9px] uppercase tracking-widest font-black mb-1 ${isLight ? 'text-gray-500' : 'opacity-40'}`}>Score Card</span>
+                  <span className={`text-4xl font-extrabold font-mono ${isLight ? 'text-violet-750' : 'text-violet-400'}`}>
+                    {score}<span className={`text-xl font-normal ${isLight ? 'text-gray-400' : 'text-white/30'}`}>/{questions.length}</span>
                   </span>
                 </div>
 
                 <div className="text-left">
-                  <span className="block text-[9px] uppercase tracking-widest font-black opacity-40 mb-1">Final Mark</span>
-                  <span className="text-xl font-bold block text-green-400">
+                  <span className={`block text-[9px] uppercase tracking-widest font-black mb-1 ${isLight ? 'text-gray-500' : 'opacity-40'}`}>Final Mark</span>
+                  <span className={`text-xl font-black block ${isLight ? 'text-green-700' : 'text-green-400'}`}>
                     {Math.round((score / questions.length) * 100)}% Grade
                   </span>
-                  <span className="text-[10px] opacity-50">
+                  <span className={`text-[10px] font-medium ${isLight ? 'text-gray-600' : 'opacity-50'}`}>
                     {score === questions.length ? 'Perfect Academic Score!' : score > questions.length / 2 ? 'Strong Fact Catch!' : 'Needs Conceptual Review'}
                   </span>
                 </div>
@@ -618,8 +636,8 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
 
               {/* Review Panel of Socratic Facts */}
               <div className="text-left mb-8">
-                <h4 className="text-xs font-black uppercase tracking-widest opacity-60 mb-4 flex items-center gap-1.5 px-1">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                <h4 className={`text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-1.5 px-1 ${isLight ? 'text-gray-850' : 'opacity-60'}`}>
+                  <CheckCircle className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                   Fact-by-Fact Study Log
                 </h4>
 
@@ -629,19 +647,23 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
                       key={idx}
                       className={`p-4 rounded-xl border ${
                         log.isCorrect 
-                          ? isLight ? 'bg-green-500/5 border-green-500/10' : 'bg-green-500/[0.02]/5 border-green-500/10'
-                          : isLight ? 'bg-rose-500/5 border-rose-500/10' : 'bg-rose-500/[0.02]/5 border-rose-500/10'
+                          ? isLight ? 'bg-green-50/70 border-green-200' : 'bg-green-500/10 border-green-500/20'
+                          : isLight ? 'bg-rose-50/70 border-rose-200' : 'bg-rose-500/10 border-rose-500/20'
                       }`}
                     >
                       <div className="flex justify-between items-start gap-4 mb-2">
                         <h5 className="text-xs font-serif font-bold line-clamp-2">
                           Q{idx + 1}: {log.question.question}
                         </h5>
-                        <span className={`text-[10px] font-mono uppercase tracking-wider font-extrabold flex-shrink-0 ${log.isCorrect ? 'text-green-400' : 'text-rose-400'}`}>
+                        <span className={`text-[10px] font-mono uppercase tracking-wider font-extrabold flex-shrink-0 ${
+                          log.isCorrect 
+                            ? isLight ? 'text-green-700' : 'text-green-400' 
+                            : isLight ? 'text-rose-700' : 'text-rose-400'
+                        }`}>
                           {log.isCorrect ? 'Correct ⚡' : 'Incorrect ❌'}
                         </span>
                       </div>
-                      <p className={`text-[11px] leading-relaxed opacity-75 ${isLight ? 'text-gray-700' : 'text-gray-300'}`}>
+                      <p className={`text-[11px] leading-relaxed ${isLight ? 'text-gray-800 font-medium' : 'text-gray-300 opacity-75'}`}>
                         <strong>Socratic Key:</strong> {log.question.explanation}
                       </p>
                     </div>
@@ -650,7 +672,7 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
               </div>
 
               {/* Form Options */}
-              <div className="flex gap-4 border-t border-white/10 pt-8 justify-center">
+              <div className={`flex gap-4 border-t pt-8 justify-center ${isLight ? 'border-gray-150' : 'border-white/10'}`}>
                 <button
                   onClick={handleExitGame}
                   className="px-6 py-3.5 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl text-xs font-bold tracking-widest cursor-pointer uppercase shadow-md shadow-violet-600/15"
