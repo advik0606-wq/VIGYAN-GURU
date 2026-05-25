@@ -91,7 +91,10 @@ export default function App() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [inputText, setInputText] = useState('');
   const [currentSteps, setCurrentSteps] = useState<ProblemStep[]>([]);
-  const [selectedLanguage, setSelectedLanguage] = useState('Hinglish');
+  const [selectedLanguage, setSelectedLanguage] = useState<'Hinglish' | 'Hindi' | 'English' | 'Marathi' | 'Bengali' | 'Tamil' | 'Telugu' | 'Gujarati' | 'Kannada' | 'Malayalam' | 'Punjabi'>(() => {
+    const saved = localStorage.getItem('vigyan_guru_language');
+    return (saved as any) || 'Hinglish';
+  });
 
   const [isSubmittingContact, setIsSubmittingContact] = useState(false);
   const [contactSubmitted, setContactSubmitted] = useState(false);
@@ -1418,13 +1421,17 @@ export default function App() {
           <div className="flex items-center gap-3">
             <select 
               value={selectedLanguage}
-              onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-bold text-white/60 outline-none focus:border-violet-500/50 transition-all appearance-none cursor-pointer hover:bg-white/10"
+              onChange={(e) => {
+                const val = e.target.value as any;
+                setSelectedLanguage(val);
+                localStorage.setItem('vigyan_guru_language', val);
+              }}
+              className="bg-[#050510] border border-white/10 rounded-xl px-4 py-2 text-[10px] font-bold text-white/80 outline-none focus:border-violet-500/50 transition-all cursor-pointer hover:bg-white/10"
             >
               {[
                 'Hinglish', 'Hindi', 'English', 'Marathi', 'Bengali', 'Tamil', 'Telugu', 'Gujarati', 'Kannada', 'Malayalam', 'Punjabi'
               ].map(lang => (
-                <option key={lang} value={lang} className="bg-[#050510] text-white">{lang}</option>
+                <option key={lang} value={lang} className="bg-[#050510] text-[#FFFFFF]">{lang}</option>
               ))}
             </select>
             <button className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-all">

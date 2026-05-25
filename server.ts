@@ -9,7 +9,14 @@ const app = express();
 const PORT = 3000;
 
 // Middleware
-app.use(express.json({ limit: '10mb' }));
+// Parse JSON bodies safely: avoid hanging on Vercel/Serverless where req.body is already parsed from the stream.
+app.use((req, res, next) => {
+  if (req.body && (typeof req.body === 'object' || Array.isArray(req.body))) {
+    next();
+  } else {
+    express.json({ limit: '10mb' })(req, res, next);
+  }
+});
 
 // API Route for Gemini
 app.post("/api/gemini", async (req, res) => {
@@ -67,7 +74,7 @@ async function setupServer() {
       appType: "spa",
     });
     app.use(vite.middlewares);
-  } else {
+  } else if (!process.env.VERCEL) {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
