@@ -1659,10 +1659,24 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
       });
 
       if (!response.ok) {
-        throw new Error("Could not contact the Socratic brain.");
+        const errorText = await response.text();
+        let errorMessage = "Could not contact the Socratic brain.";
+        try {
+          const errData = JSON.parse(errorText);
+          errorMessage = errData.error || errorMessage;
+        } catch (_) {
+          errorMessage = `${errorMessage} (${errorText || response.statusText})`;
+        }
+        throw new Error(errorMessage);
       }
 
-      const resData = await response.json();
+      const resultText = await response.text();
+      let resData;
+      try {
+        resData = JSON.parse(resultText);
+      } catch (err) {
+        throw new Error(`Received unexpected plain text format from server during quiz generation: ${resultText.slice(0, 150)}`);
+      }
       let quizJSON;
       try {
         const txt = resData.candidates?.[0]?.content?.parts?.[0]?.text || resData.text || "";
@@ -1743,10 +1757,24 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
       });
 
       if (!response.ok) {
-        throw new Error("Could not contact the Socratic brain.");
+        const errorText = await response.text();
+        let errorMessage = "Could not contact the Socratic brain.";
+        try {
+          const errData = JSON.parse(errorText);
+          errorMessage = errData.error || errorMessage;
+        } catch (_) {
+          errorMessage = `${errorMessage} (${errorText || response.statusText})`;
+        }
+        throw new Error(errorMessage);
       }
 
-      const resData = await response.json();
+      const resultText = await response.text();
+      let resData;
+      try {
+        resData = JSON.parse(resultText);
+      } catch (err) {
+        throw new Error(`Received unexpected plain text format from server during flashcards generation: ${resultText.slice(0, 150)}`);
+      }
       let deckJSON;
       try {
         const txt = resData.candidates?.[0]?.content?.parts?.[0]?.text || resData.text || "";

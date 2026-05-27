@@ -45,11 +45,25 @@ export const getSocraticTutorResponse = async (
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to get response from Vigyan Guru.");
+    const errorText = await response.text();
+    let errorMessage = "Failed to get response from Vigyan Guru.";
+    try {
+      const errJson = JSON.parse(errorText);
+      errorMessage = errJson.error || errorMessage;
+    } catch (_) {
+      errorMessage = errorText || `Server error (${response.status}): ${response.statusText}`;
+    }
+    throw new Error(errorMessage);
   }
 
-  const result = await response.json();
+  const resultText = await response.text();
+  let result;
+  try {
+    result = JSON.parse(resultText);
+  } catch (err) {
+    throw new Error(`Received non-JSON response from server: ${resultText.slice(0, 150)}`);
+  }
+
   if (result && result.text) {
     return result;
   }
@@ -82,10 +96,24 @@ export const generateWeeklyQuestion = async (
   });
 
   if (!response.ok) {
-    throw new Error("Failed to generate test question.");
+    const errorText = await response.text();
+    let errorMessage = "Failed to generate test question.";
+    try {
+      const errJson = JSON.parse(errorText);
+      errorMessage = errJson.error || errorMessage;
+    } catch (_) {
+      errorMessage = `${errorMessage} (HTTP ${response.status}: ${errorText || response.statusText})`;
+    }
+    throw new Error(errorMessage);
   }
 
-  const result = await response.json();
+  const resultText = await response.text();
+  let result;
+  try {
+    result = JSON.parse(resultText);
+  } catch (err) {
+    throw new Error(`Received non-JSON response from server during test generation: ${resultText.slice(0, 150)}`);
+  }
   return result.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "State and explain the primary principles governing this topic.";
 };
 
@@ -121,10 +149,24 @@ export const evaluateWeeklyTest = async (
   });
 
   if (!response.ok) {
-    throw new Error("Failed to evaluate test.");
+    const errorText = await response.text();
+    let errorMessage = "Failed to evaluate test.";
+    try {
+      const errJson = JSON.parse(errorText);
+      errorMessage = errJson.error || errorMessage;
+    } catch (_) {
+      errorMessage = `${errorMessage} (HTTP ${response.status}: ${errorText || response.statusText})`;
+    }
+    throw new Error(errorMessage);
   }
 
-  const result = await response.json();
+  const resultText = await response.text();
+  let result;
+  try {
+    result = JSON.parse(resultText);
+  } catch (err) {
+    throw new Error(`Received non-JSON response from server during evaluation: ${resultText.slice(0, 150)}`);
+  }
   const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
   try {
     const cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();

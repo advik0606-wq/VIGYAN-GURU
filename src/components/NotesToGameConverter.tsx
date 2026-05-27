@@ -231,17 +231,26 @@ export function NotesToGameConverter({ user, isLight }: NotesToGameConverterProp
 
       if (!response.ok) {
         let serverErrorMsg = "Unable to contact the AI Study generator. Please verify your system's online status.";
+        const errorText = await response.text();
         try {
-          const errData = await response.json();
+          const errData = JSON.parse(errorText);
           if (errData && errData.error) {
             serverErrorMsg = errData.error;
           }
-        } catch (_) {}
+        } catch (_) {
+          serverErrorMsg = errorText || `Server error (${response.status}): ${response.statusText}`;
+        }
         throw new Error(serverErrorMsg);
       }
 
       setGenerationStep('Parsing scientific facts and building visual game interface...');
-      const resData = await response.json();
+      const resultText = await response.text();
+      let resData;
+      try {
+        resData = JSON.parse(resultText);
+      } catch (err) {
+        throw new Error(`Received non-JSON response from server during game extraction: ${resultText.slice(0, 150)}`);
+      }
       const rawText = resData.text || resData.candidates?.[0]?.content?.parts?.[0]?.text || "";
       
       let cleanStr = rawText;
