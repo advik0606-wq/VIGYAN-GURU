@@ -67,8 +67,9 @@ app.get("/api/health", (req, res) => {
 
 // Vite middleware for development
 async function setupServer() {
-  if (process.env.NODE_ENV !== "production") {
-    const { createServer: createViteServer } = await import("vite");
+  if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+    const viteKey = "vite";
+    const { createServer: createViteServer } = await import(viteKey);
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -85,7 +86,7 @@ async function setupServer() {
 
 setupServer();
 
-if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
+if (!process.env.VERCEL) {
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
   });
