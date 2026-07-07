@@ -39,7 +39,8 @@ import {
   Zap,
   Share2,
   Copy,
-  Check
+  Check,
+  Gamepad2
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import confetti from 'canvas-confetti';
@@ -73,7 +74,7 @@ import {
   deleteDoc
 } from './lib/firebase';
 
-export type Page = 'home' | 'tutor' | 'streaks' | 'library' | 'practice' | 'auth' | 'contact' | 'reviews';
+export type Page = 'home' | 'tutor' | 'practice' | 'games' | 'auth' | 'contact' | 'reviews';
 export type AuthMode = 'login' | 'signup';
 
 export default function App() {
@@ -1107,8 +1108,7 @@ export default function App() {
         { id: 'home', icon: LayoutGrid, label: 'Hub' },
         { id: 'tutor', icon: Sparkles, label: 'Tutor' },
         { id: 'practice', icon: GraduationCap, label: 'Practice' },
-        { id: 'streaks', icon: BrainCircuit, label: 'Collective' },
-        { id: 'library', icon: History, label: 'Vault' },
+        { id: 'games', icon: Gamepad2, label: 'Games' },
         { id: 'reviews', icon: Star, label: 'Reviews' },
         { id: 'contact', icon: MessageSquare, label: 'Contact' },
       ].map((item) => (
@@ -1184,10 +1184,10 @@ export default function App() {
               <h3 className="text-3xl font-bold mb-4 tracking-tight leading-tight">Master Complex Projects without Shortcuts.</h3>
               <p className="text-white/50 leading-relaxed mb-8">Vigyan Guru uses deep reasoning to identify exactly where your logic breaks, guiding you back to clarity without ever giving the answer away.</p>
               <button 
-                onClick={() => setActivePage('streaks')}
+                onClick={() => setActivePage('games')}
                 className="px-8 py-4 bg-white text-black rounded-2xl font-bold text-sm tracking-tight hover:scale-105 transition-transform"
               >
-                JOIN THE STUDY CLUB
+                PLAY EDUCATIONAL GAMES
               </button>
             </div>
             <div className="w-16 h-16 bg-white/5 backdrop-blur-2xl rounded-2xl border border-white/20 flex flex-col items-center justify-center shadow-2xl">
@@ -3988,8 +3988,7 @@ Return ONLY a valid JSON object matching this schema. Avoid any wrapping markdow
         {activePage === 'home' && renderHome()}
         {activePage === 'tutor' && (user ? renderTutor() : renderAuth())}
         {activePage === 'practice' && (user ? renderPractice() : renderAuth())}
-        {activePage === 'streaks' && (user ? renderStreaks() : renderAuth())}
-        {activePage === 'library' && (user ? renderLibrary() : renderAuth())}
+        {activePage === 'games' && (user ? <NotesToGameConverter user={user} isLight={isLight} /> : renderAuth())}
         {activePage === 'reviews' && renderReviews()}
         {activePage === 'contact' && renderContact()}
       </div>

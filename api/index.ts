@@ -6,13 +6,30 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
+// CORS & Preflight Options Handler
 app.use((req, res, next) => {
-  if (req.body && (typeof req.body === 'object' || Array.isArray(req.body))) {
-    next();
-  } else {
-    express.json({ limit: '10mb' })(req, res, next);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type,Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
   }
+  next();
+});
+
+// Safe Body Parsing Middleware
+app.use((req, res, next) => {
+  // If the body is already parsed by Vercel's runtime, proceed
+  if (req.body && (typeof req.body === 'object' || Array.isArray(req.body))) {
+    return next();
+  }
+  // Only invoke body-parsing middleware for methods that contain a body
+  if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
+    return express.json({ limit: '10mb' })(req, res, next);
+  }
+  next();
 });
 
 // API Route for Gemini
